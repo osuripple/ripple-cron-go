@@ -25,10 +25,14 @@ type config struct {
 	BuildLeaderboards       bool
 
 	LogQueries bool `description:"You don't wanna do this in prod."`
+	Workers    int  `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
 
 var db *sql.DB
-var c config
+var c = config{
+	DSN:     "root@/ripple",
+	Workers: 8,
+}
 var wg sync.WaitGroup
 var chanWg sync.WaitGroup
 
@@ -70,9 +74,9 @@ func main() {
 	color.Green(" ok!")
 	defer db.Close()
 
-	// spawn 8 workers
+	// spawn some workers
 	fmt.Print("Spawning necessary workers...")
-	for i := 0; i < 8; i++ {
+	for i := 0; i < c.Workers; i++ {
 		chanWg.Add(1)
 		go worker()
 	}
