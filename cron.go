@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/fatih/color"
 	_ "github.com/go-sql-driver/mysql"
@@ -82,6 +83,8 @@ func main() {
 	}
 	color.Green(" ok!")
 
+	timeAtStart := time.Now()
+
 	if c.CalculateAccuracy {
 		fmt.Print("Starting accuracy calculator worker...")
 		wg.Add(1)
@@ -120,6 +123,7 @@ func main() {
 
 	wg.Wait()
 	color.Green("Data elaboration has been terminated.")
+	color.Green("Execution time: %.4fs", time.Now().Sub(timeAtStart).Seconds())
 	color.Yellow("Waiting for workers to finish...")
 	close(execOperations)
 	chanWg.Wait()
