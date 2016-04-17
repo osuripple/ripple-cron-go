@@ -159,7 +159,7 @@ func getLevel(rankedScore int64) int {
 func getRequiredScoreForLevel(level int) int64 {
 	if level <= 100 {
 		if level > 1 {
-			return int64(math.Floor(float64(500)/3*(4*math.Pow(float64(level), 3)-3*math.Pow(float64(level), 2)-float64(level)) + math.Floor(1.25*math.Pow(1.8, float64(level)-60))))
+			return int64(math.Floor(float64(5000)/3*(4*math.Pow(float64(level), 3)-3*math.Pow(float64(level), 2)-float64(level)) + math.Floor(1.25*math.Pow(1.8, float64(level)-60))))
 		}
 		return 1
 	}
