@@ -42,6 +42,7 @@ func opCleanReplays() {
 		os.Remove(filename)
 	}
 	rows.Close()
+	color.Green("> CleanReplays: done!")
 	wg.Done()
 }
 func removeTrailingSlash(s string) string {
@@ -68,7 +69,7 @@ func opDeleteReplayCache() {
 		}
 		count++
 	}
-	fmt.Println("> DeleteReplaysFull:", count, "replays deleted")
+	color.Green("> DeleteReplaysFull: done! %d replays deleted", count)
 
 	wg.Done()
 }

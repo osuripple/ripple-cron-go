@@ -111,6 +111,12 @@ func main() {
 		go opDeleteReplayCache()
 		color.Green(" ok!")
 	}
+	if c.BuildLeaderboards {
+		fmt.Print("Starting building leaderboards...")
+		wg.Add(1)
+		go opBuildLeaderboard()
+		color.Green(" ok!")
+	}
 
 	wg.Wait()
 	color.Green("Data elaboration has been terminated.")

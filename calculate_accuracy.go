@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"math"
+
+	"github.com/fatih/color"
 )
 
 func opCalculateAccuracy() {
@@ -44,6 +46,7 @@ func opCalculateAccuracy() {
 		count++
 	}
 	rows.Close()
+	color.Green("> CalculateAccuracy: done!")
 	wg.Done()
 }
 

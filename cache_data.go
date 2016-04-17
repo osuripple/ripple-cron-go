@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+
+	"github.com/fatih/color"
 )
 
 type s struct {
@@ -141,6 +143,7 @@ func opCacheData() {
 			}
 		}
 	}
+	color.Green("> CacheData: done!")
 	wg.Done()
 }
 
