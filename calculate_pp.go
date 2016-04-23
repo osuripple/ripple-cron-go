@@ -29,7 +29,7 @@ func opCalculatePP() {
 		}
 		var (
 			username string
-			ppAmt    int
+			ppAmt    float64
 			playMode int
 		)
 		err := rows.Scan(&username, &ppAmt, &playMode)
@@ -40,12 +40,16 @@ func opCalculatePP() {
 		if users[username] == nil {
 			users[username] = &ppUserMode{}
 		}
-		currentScorePP := math.Ceil(math.Ceil(float64(ppAmt)) * math.Pow(0.95, float64(users[username].countScores)))
+		currentScorePP := math.Ceil(math.Ceil(ppAmt) * math.Pow(0.95, float64(users[username].countScores)))
 		users[username].countScores++
 		users[username].ppTotal += int(currentScorePP)
 		count++
 	}
 	rows.Close()
+
+	for username, ppUM := range users {
+		op("UPDATE users_stats SET pp_std = ? WHERE username = ?", ppUM.ppTotal, username)
+	}
 
 	color.Green("> CalculatePP: done!")
 
