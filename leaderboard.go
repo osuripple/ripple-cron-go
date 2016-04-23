@@ -41,11 +41,11 @@ func opBuildLeaderboard() {
 	)
 	for rows.Next() {
 		var (
-			uid     int64
+			uid     int
 			stdPP   int64
 			taikoPP int64
 			ctbPP   int64
-			maniaPP int
+			maniaPP int64
 		)
 		rows.Scan(&uid, &stdPP, &taikoPP, &ctbPP, &maniaPP)
 		std = append(std, lbUser{uid, stdPP})
