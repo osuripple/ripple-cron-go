@@ -40,6 +40,7 @@ func opCleanReplays() {
 		// We don't check if the file exists, because that would be an useless I/O operation
 		// TODO: WorkGroup?
 		os.Remove(filename)
+		count++
 	}
 	rows.Close()
 	color.Green("> CleanReplays: done!")
