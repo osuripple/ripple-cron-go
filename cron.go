@@ -115,15 +115,9 @@ func main() {
 		go opDeleteReplayCache()
 		color.Green(" ok!")
 	}
-	if c.BuildLeaderboards {
-		fmt.Print("Starting building leaderboards...")
-		wg.Add(1)
-		go opBuildLeaderboard()
-		color.Green(" ok!")
-	}
 	if c.CalculatePP {
 		fmt.Print("Starting calculating pp...")
-		wg.Add(1)
+		wg.Add(2)
 		go opCalculatePP()
 		color.Green(" ok!")
 	}

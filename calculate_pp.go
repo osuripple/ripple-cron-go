@@ -54,4 +54,10 @@ func opCalculatePP() {
 	color.Green("> CalculatePP: done!")
 
 	wg.Done()
+
+	if c.BuildLeaderboards {
+		fmt.Print("Starting building leaderboards...")
+		go opBuildLeaderboard()
+		color.Green(" ok!")
+	}
 }
