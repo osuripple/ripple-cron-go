@@ -40,7 +40,10 @@ func opCalculatePP() {
 		if users[username] == nil {
 			users[username] = &ppUserMode{}
 		}
-		currentScorePP := math.Ceil(math.Ceil(ppAmt) * math.Pow(0.95, float64(users[username].countScores)))
+		if users[username].countScores > 100 {
+			continue
+		}
+		currentScorePP := round(round(ppAmt) * math.Pow(0.95, float64(users[username].countScores)))
 		users[username].countScores++
 		users[username].ppTotal += int(currentScorePP)
 		count++
@@ -60,4 +63,11 @@ func opCalculatePP() {
 		go opBuildLeaderboard()
 		color.Green(" ok!")
 	}
+}
+
+func round(a float64) float64 {
+	if a < 0 {
+		return math.Ceil(a - 0.5)
+	}
+	return math.Floor(a + 0.5)
 }
