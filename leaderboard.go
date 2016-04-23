@@ -8,8 +8,8 @@ import (
 )
 
 type lbUser struct {
-	uid   int
-	score int64
+	uid int
+	pp  int
 }
 
 type lbUserSlice []lbUser
@@ -20,14 +20,14 @@ func (l lbUserSlice) Len() int {
 	return len(l)
 }
 func (l lbUserSlice) Less(i, j int) bool {
-	return l[i].score > l[j].score
+	return l[i].pp > l[j].pp
 }
 func (l lbUserSlice) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
 func opBuildLeaderboard() {
-	initQuery := "SELECT users_stats.id, ranked_score_std, ranked_score_taiko, ranked_score_ctb, ranked_score_mania FROM users_stats LEFT JOIN users ON users.id = users_stats.id WHERE users.allowed = '1'"
+	initQuery := "SELECT users_stats.id, pp_std, pp_taiko, pp_ctb, pp_mania FROM users_stats LEFT JOIN users ON users.id = users_stats.id WHERE users.allowed = '1'"
 	rows, err := db.Query(initQuery)
 	if err != nil {
 		queryError(err, initQuery)
@@ -41,17 +41,17 @@ func opBuildLeaderboard() {
 	)
 	for rows.Next() {
 		var (
-			uid        int
-			stdScore   int64
-			taikoScore int64
-			ctbScore   int64
-			maniaScore int64
+			uid     int
+			stdPP   int
+			taikoPP int
+			ctbPP   int
+			maniaPP int
 		)
-		rows.Scan(&uid, &stdScore, &taikoScore, &ctbScore, &maniaScore)
-		std = append(std, lbUser{uid, stdScore})
-		taiko = append(taiko, lbUser{uid, taikoScore})
-		ctb = append(ctb, lbUser{uid, ctbScore})
-		mania = append(mania, lbUser{uid, maniaScore})
+		rows.Scan(&uid, &stdPP, &taikoPP, &ctbPP, &maniaPP)
+		std = append(std, lbUser{uid, stdPP})
+		taiko = append(taiko, lbUser{uid, taikoPP})
+		ctb = append(ctb, lbUser{uid, ctbPP})
+		mania = append(mania, lbUser{uid, maniaPP})
 	}
 	rows.Close()
 	sort.Sort(std)
@@ -66,7 +66,7 @@ func opBuildLeaderboard() {
 		var modeInsert = "INSERT INTO leaderboard_" + modeToString(modeID) + " (position, user, v) VALUES "
 		for pos, us := range sl {
 			modeInsert += fmt.Sprintf("(?, ?, ?), ")
-			params = append(params, pos+1, us.uid, us.score)
+			params = append(params, pos+1, us.uid, us.pp)
 		}
 		// remove last two characters (`, `)
 		modeInsert = modeInsert[:len(modeInsert)-2]
