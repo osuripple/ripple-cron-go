@@ -9,7 +9,7 @@ import (
 
 type lbUser struct {
 	uid int
-	pp  int
+	pp  int64
 }
 
 type lbUserSlice []lbUser
@@ -27,7 +27,7 @@ func (l lbUserSlice) Swap(i, j int) {
 }
 
 func opBuildLeaderboard() {
-	initQuery := "SELECT users_stats.id, pp_std, pp_taiko, pp_ctb, pp_mania FROM users_stats LEFT JOIN users ON users.id = users_stats.id WHERE users.allowed = '1'"
+	initQuery := "SELECT users_stats.id, pp_std, ranked_score_taiko, ranked_score_ctb, ranked_score_mania FROM users_stats LEFT JOIN users ON users.id = users_stats.id WHERE users.allowed = '1'"
 	rows, err := db.Query(initQuery)
 	if err != nil {
 		queryError(err, initQuery)
@@ -41,10 +41,10 @@ func opBuildLeaderboard() {
 	)
 	for rows.Next() {
 		var (
-			uid     int
-			stdPP   int
-			taikoPP int
-			ctbPP   int
+			uid     int64
+			stdPP   int64
+			taikoPP int64
+			ctbPP   int64
 			maniaPP int
 		)
 		rows.Scan(&uid, &stdPP, &taikoPP, &ctbPP, &maniaPP)
