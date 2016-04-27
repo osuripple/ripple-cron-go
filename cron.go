@@ -25,6 +25,7 @@ type config struct {
 	DeleteReplayCache       bool
 	BuildLeaderboards       bool
 	CalculatePP             bool
+	FixScoreDuplicates      bool `description:"might take a VERY long time"`
 
 	LogQueries bool `description:"You don't wanna do this in prod."`
 	Workers    int  `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
@@ -119,6 +120,12 @@ func main() {
 		fmt.Print("Starting calculating pp...")
 		wg.Add(2)
 		go opCalculatePP()
+		color.Green(" ok!")
+	}
+	if c.FixScoreDuplicates {
+		fmt.Print("Starting fixing score duplicates...")
+		wg.Add(1)
+		go opFixScoreDuplicates()
 		color.Green(" ok!")
 	}
 
