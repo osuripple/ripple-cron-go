@@ -27,6 +27,7 @@ type config struct {
 	CalculatePP             bool
 	FixScoreDuplicates      bool `description:"might take a VERY long time"`
 
+	Lock       bool `description:"Do this in prod if you have a lot of users. It will avoid memes of leaderboard update, but it will be slower (no multi mysql connections)"`
 	LogQueries bool `description:"You don't wanna do this in prod."`
 	Workers    int  `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
@@ -78,6 +79,9 @@ func main() {
 	defer db.Close()
 
 	// spawn some workers
+	if c.Lock {
+		c.Workers = 1
+	}
 	fmt.Print("Spawning necessary workers...")
 	for i := 0; i < c.Workers; i++ {
 		chanWg.Add(1)
@@ -86,6 +90,20 @@ func main() {
 	color.Green(" ok!")
 
 	timeAtStart := time.Now()
+
+	if c.Lock {
+		locks := "LOCK TABLES "
+		for _, i := range []string{"leaderboard_std", "leaderboard_ctb", "leaderboard_mania", "leaderboard_taiko", "users_stats", "scores", "users", "password_recovery"} {
+			locks += i + " WRITE, "
+		}
+		locks = locks[:len(locks)-2]
+		_, err = db.Exec(locks)
+		if err != nil {
+			queryError(err, locks)
+			return
+		}
+		db.SetMaxOpenConns(1)
+	}
 
 	if c.CalculateAccuracy {
 		fmt.Print("Starting accuracy calculator worker...")
@@ -133,6 +151,7 @@ func main() {
 	color.Green("Data elaboration has been terminated.")
 	color.Green("Execution time: %.4fs", time.Now().Sub(timeAtStart).Seconds())
 	color.Yellow("Waiting for workers to finish...")
+	op("UNLOCK TABLES")
 	close(execOperations)
 	chanWg.Wait()
 }
@@ -148,7 +167,7 @@ func op(query string, params ...interface{}) {
 }
 
 // Operations that can be executed with a simple db.Exec, distributed across 8 workers.
-var execOperations = make(chan operation, 10000)
+var execOperations = make(chan operation, 100000)
 
 func worker() {
 	for op := range execOperations {
