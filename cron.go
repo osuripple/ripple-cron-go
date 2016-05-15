@@ -148,7 +148,7 @@ func op(query string, params ...interface{}) {
 }
 
 // Operations that can be executed with a simple db.Exec, distributed across 8 workers.
-var execOperations = make(chan operation, 10000)
+var execOperations = make(chan operation, 100000)
 
 func worker() {
 	for op := range execOperations {

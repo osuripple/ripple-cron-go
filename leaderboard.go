@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"sort"
 
@@ -26,11 +27,23 @@ func (l lbUserSlice) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
+// TODO(howl): respect conf.LogQueries
 func opBuildLeaderboard() {
+	// creating a new db instance so that we don't have to execute everything
+	// in 1 mysql worker for the main stuff
+	db, err := sql.Open("mysql", c.DSN)
+	if err != nil {
+		color.Red("> BuildLeaderboard: couldn't start secondary db connection (%v)", err)
+		wg.Done()
+		return
+	}
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
 	initQuery := "SELECT users_stats.id, pp_std, ranked_score_taiko, ranked_score_ctb, ranked_score_mania FROM users_stats LEFT JOIN users ON users.id = users_stats.id WHERE users.allowed = '1'"
 	rows, err := db.Query(initQuery)
 	if err != nil {
 		queryError(err, initQuery)
+		wg.Done()
 		return
 	}
 	var (
@@ -71,11 +84,27 @@ func opBuildLeaderboard() {
 		// remove last two characters (`, `)
 		modeInsert = modeInsert[:len(modeInsert)-2]
 		// In this case, it is really important to truncate BEFORE and then add the insert.
-		_, err := db.Exec("TRUNCATE TABLE leaderboard_" + modeToString(modeID))
+		_, err := db.Exec("LOCK TABLES leaderboard_" + modeToString(modeID) + " WRITE")
+		if err != nil {
+			queryError(err, "LOCK TABLES leaderboard_"+modeToString(modeID)+" WRITE")
+			wg.Done()
+			return
+		}
+		_, err = db.Exec("TRUNCATE TABLE leaderboard_" + modeToString(modeID))
 		if err != nil {
 			queryError(err, "TRUNCATE TABLE leaderboard_"+modeToString(modeID))
 		}
-		op(modeInsert, params...)
+		_, err = db.Exec(modeInsert, params...)
+		if err != nil {
+			queryError(err, "<modeInsert>")
+		}
+		_, err = db.Exec("UNLOCK TABLES")
+		if err != nil {
+			queryError(err, "UNLOCK TABLES")
+			wg.Done()
+			return
+		}
+
 		color.Green("> BuildLeaderboard: %s leaderboard built!", modeToString(modeID))
 	}
 	wg.Done()
