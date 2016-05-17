@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 
+	"git.zxq.co/ripple/ocl"
 	"github.com/fatih/color"
 )
 
@@ -101,10 +101,10 @@ func opCacheData() {
 					data[id][i] = &s{}
 				}
 			}
-			data[id][0].level = getLevel(std)
-			data[id][1].level = getLevel(taiko)
-			data[id][2].level = getLevel(ctb)
-			data[id][3].level = getLevel(mania)
+			data[id][0].level = ocl.GetLevel(std)
+			data[id][1].level = ocl.GetLevel(taiko)
+			data[id][2].level = ocl.GetLevel(ctb)
+			data[id][3].level = ocl.GetLevel(mania)
 			count++
 		}
 		rows.Close()
@@ -145,25 +145,6 @@ func opCacheData() {
 	}
 	color.Green("> CacheData: done!")
 	wg.Done()
-}
-
-func getLevel(rankedScore int64) int {
-	for i := 1; i < 8000; i++ {
-		lScore := getRequiredScoreForLevel(i)
-		if rankedScore < lScore {
-			return i
-		}
-	}
-	return 8000
-}
-func getRequiredScoreForLevel(level int) int64 {
-	if level <= 100 {
-		if level > 1 {
-			return int64(math.Floor(float64(5000)/3*(4*math.Pow(float64(level), 3)-3*math.Pow(float64(level), 2)-float64(level)) + math.Floor(1.25*math.Pow(1.8, float64(level)-60))))
-		}
-		return 1
-	}
-	return 26931190829 + 100000000000*int64(level-100)
 }
 
 var modes = [...]string{
