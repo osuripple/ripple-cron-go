@@ -9,7 +9,7 @@ import (
 type score struct {
 	id         int
 	beatmapMD5 string
-	username   string
+	userid     int
 	score      int
 	maxCombo   int
 	mods       int
@@ -19,7 +19,7 @@ type score struct {
 
 func (s score) sameAs(t score) bool {
 	return s.beatmapMD5 == t.beatmapMD5 &&
-		s.username == t.username &&
+		s.userid == t.userid &&
 		s.score == t.score &&
 		s.maxCombo == t.maxCombo &&
 		s.mods == t.mods &&
@@ -28,7 +28,7 @@ func (s score) sameAs(t score) bool {
 }
 
 func opFixScoreDuplicates() {
-	const initQuery = "SELECT id, beatmap_md5, username, score, max_combo, mods, play_mode, accuracy FROM scores WHERE completed = '3'"
+	const initQuery = "SELECT id, beatmap_md5, userid, score, max_combo, mods, play_mode, accuracy FROM scores WHERE completed = '3'"
 	scores := []score{}
 	rows, err := db.Query(initQuery)
 	if err != nil {
@@ -40,7 +40,7 @@ func opFixScoreDuplicates() {
 		rows.Scan(
 			&currentScore.id,
 			&currentScore.beatmapMD5,
-			&currentScore.username,
+			&currentScore.userid,
 			&currentScore.score,
 			&currentScore.maxCombo,
 			&currentScore.mods,
@@ -56,13 +56,13 @@ func opFixScoreDuplicates() {
 	remove := []int{}
 	var ops int64
 	for i := 0; i < len(scores); i++ {
-		if ops%10000 == 0 {
-			fmt.Println("> FixScoreDuplicates:", ops)
-		}
 		if contains(remove, scores[i].id) {
 			continue
 		}
 		for j := i + 1; j < len(scores); j++ {
+			if ops%5000000 == 0 {
+				fmt.Println("> FixScoreDuplicates:", ops)
+			}
 			if scores[i].sameAs(scores[j]) && !contains(remove, scores[j].id) {
 				fmt.Println("> FixScoreDuplicates: found one!")
 				remove = append(remove, scores[j].id)

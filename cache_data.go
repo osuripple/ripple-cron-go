@@ -16,7 +16,14 @@ type s struct {
 
 func opCacheData() {
 	// get data
-	const fetchQuery = `SELECT users.id as user_id, users.username, scores.play_mode, scores.score, scores.completed, scores.300_count, scores.100_count, scores.50_count FROM scores LEFT JOIN users ON users.username=scores.username WHERE users.allowed = '1'`
+	const fetchQuery = `
+	SELECT
+		users.id as user_id, users.username, scores.play_mode,
+		scores.score, scores.completed, scores.300_count,
+		scores.100_count, scores.50_count
+	FROM scores
+	LEFT JOIN users ON users.id=scores.userid
+	WHERE users.allowed = '1'`
 	rows, err := db.Query(fetchQuery)
 	if err != nil {
 		queryError(err, fetchQuery)

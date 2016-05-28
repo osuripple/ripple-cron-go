@@ -13,14 +13,14 @@ type ppUserMode struct {
 }
 
 func opCalculatePP() {
-	const ppQuery = "SELECT scores.username, pp, scores.play_mode FROM scores LEFT JOIN users ON users.username=scores.username WHERE completed = '3' AND users.allowed = '1' ORDER BY pp DESC"
+	const ppQuery = "SELECT scores.userid, pp, scores.play_mode FROM scores LEFT JOIN users ON users.id=scores.userid WHERE completed = '3' AND users.allowed = '1' ORDER BY pp DESC"
 	rows, err := db.Query(ppQuery)
 	if err != nil {
 		queryError(err, ppQuery)
 		return
 	}
 
-	users := make(map[string]*ppUserMode)
+	users := make(map[int]*ppUserMode)
 	var count int
 
 	for rows.Next() {
@@ -28,30 +28,30 @@ func opCalculatePP() {
 			fmt.Println("> CalculatePP:", count)
 		}
 		var (
-			username string
+			userid   int
 			ppAmt    float64
 			playMode int
 		)
-		err := rows.Scan(&username, &ppAmt, &playMode)
+		err := rows.Scan(&userid, &ppAmt, &playMode)
 		if err != nil {
 			queryError(err, ppQuery)
 			continue
 		}
-		if users[username] == nil {
-			users[username] = &ppUserMode{}
+		if users[userid] == nil {
+			users[userid] = &ppUserMode{}
 		}
-		if users[username].countScores > 100 {
+		if users[userid].countScores > 100 {
 			continue
 		}
-		currentScorePP := round(round(ppAmt) * math.Pow(0.95, float64(users[username].countScores)))
-		users[username].countScores++
-		users[username].ppTotal += int(currentScorePP)
+		currentScorePP := round(round(ppAmt) * math.Pow(0.95, float64(users[userid].countScores)))
+		users[userid].countScores++
+		users[userid].ppTotal += int(currentScorePP)
 		count++
 	}
 	rows.Close()
 
-	for username, ppUM := range users {
-		op("UPDATE users_stats SET pp_std = ? WHERE username = ?", ppUM.ppTotal, username)
+	for userid, ppUM := range users {
+		op("UPDATE users_stats SET pp_std = ? WHERE id = ?", ppUM.ppTotal, userid)
 	}
 
 	color.Green("> CalculatePP: done!")
