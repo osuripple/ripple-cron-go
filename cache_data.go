@@ -15,6 +15,7 @@ type s struct {
 }
 
 func opCacheData() {
+	defer wg.Done()
 	// get data
 	const fetchQuery = `
 	SELECT
@@ -151,7 +152,6 @@ func opCacheData() {
 		}
 	}
 	color.Green("> CacheData: done!")
-	wg.Done()
 }
 
 var modes = [...]string{

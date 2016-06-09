@@ -37,10 +37,10 @@ import (
 )
 
 func opTimeConsumingTask() {
+	defer wg.Done()
+	
 	time.Sleep(time.Second)
 	color.Green("> TimeConsumingTask: done!", count)
-
-	wg.Done()
 }
 ```
 

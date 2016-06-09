@@ -28,6 +28,7 @@ func (s score) sameAs(t score) bool {
 }
 
 func opFixScoreDuplicates() {
+	defer wg.Done()
 	const initQuery = "SELECT id, beatmap_md5, userid, score, max_combo, mods, play_mode, accuracy FROM scores WHERE completed = '3'"
 	scores := []score{}
 	rows, err := db.Query(initQuery)
@@ -75,8 +76,6 @@ func opFixScoreDuplicates() {
 		op("DELETE FROM scores WHERE id = ?", v)
 	}
 	color.Green("> FixScoreDuplicates: done!")
-
-	wg.Done()
 }
 
 func contains(arr []int, i int) bool {

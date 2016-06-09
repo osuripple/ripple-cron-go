@@ -8,6 +8,7 @@ import (
 )
 
 func opCalculateAccuracy() {
+	defer wg.Done()
 	const initQuery = "SELECT id, 300_count, 100_count, 50_count, gekis_count, katus_count, misses_count, play_mode, accuracy FROM scores"
 	rows, err := db.Query(initQuery)
 	if err != nil {
@@ -47,7 +48,6 @@ func opCalculateAccuracy() {
 	}
 	rows.Close()
 	color.Green("> CalculateAccuracy: done!")
-	wg.Done()
 }
 
 func calculateAccuracy(count300, count100, count50, countgeki, countkatu, countmiss, playMode int) float64 {

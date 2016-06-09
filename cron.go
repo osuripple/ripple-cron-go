@@ -20,12 +20,13 @@ type config struct {
 	CacheTotalHits    bool
 	CacheLevel        bool
 
-	DeleteOldPasswordResets bool
-	CleanReplays            bool
-	DeleteReplayCache       bool
-	BuildLeaderboards       bool
-	CalculatePP             bool
-	FixScoreDuplicates      bool `description:"might take a VERY long time"`
+	DeleteOldPasswordResets  bool
+	CleanReplays             bool
+	DeleteReplayCache        bool
+	BuildLeaderboards        bool
+	CalculatePP              bool
+	FixScoreDuplicates       bool `description:"might take a VERY long time"`
+	CalculateOverallAccuracy bool
 
 	LogQueries bool `description:"You don't wanna do this in prod."`
 	Workers    int  `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
@@ -126,6 +127,12 @@ func main() {
 		fmt.Print("Starting fixing score duplicates...")
 		wg.Add(1)
 		go opFixScoreDuplicates()
+		color.Green(" ok!")
+	}
+	if c.CalculateOverallAccuracy {
+		fmt.Print("Starting calculating overall accuracy...")
+		wg.Add(1)
+		go opCalculateOverallAccuracy()
 		color.Green(" ok!")
 	}
 

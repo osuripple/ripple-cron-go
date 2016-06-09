@@ -9,6 +9,7 @@ import (
 )
 
 func opCleanReplays() {
+	defer wg.Done()
 	dir := removeTrailingSlash(c.RippleDir) + "/osu.ppy.sh/replays"
 	if finfo, err := os.Stat(dir); err != nil || !finfo.IsDir() {
 		color.Red("> CleanReplays: failed to start cleaning replays:")
@@ -44,7 +45,6 @@ func opCleanReplays() {
 	}
 	rows.Close()
 	color.Green("> CleanReplays: done!")
-	wg.Done()
 }
 func removeTrailingSlash(s string) string {
 	if s[len(s)-1] == '/' {
@@ -54,6 +54,8 @@ func removeTrailingSlash(s string) string {
 }
 
 func opDeleteReplayCache() {
+	defer wg.Done()
+
 	dir := removeTrailingSlash(c.RippleDir) + "/osu.ppy.sh/replays_full"
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -71,6 +73,4 @@ func opDeleteReplayCache() {
 		count++
 	}
 	color.Green("> DeleteReplaysFull: done! %d replays deleted", count)
-
-	wg.Done()
 }
