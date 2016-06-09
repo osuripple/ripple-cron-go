@@ -63,7 +63,7 @@ func (c *coaeCollectionCollection) Add(n calculateOverallAccuracyElement) error 
 func opCalculateOverallAccuracy() {
 	defer wg.Done()
 	data := make(map[int]*coaeCollectionCollection)
-	const memeQuery = "SELECT users.id, scores.play_mode, scores.accuracy, scores.pp FROM scores LEFT JOIN users ON users.id = scores.userid WHERE completed = '3'"
+	const memeQuery = "SELECT users.id, scores.play_mode, scores.accuracy, scores.pp FROM scores INNER JOIN users ON users.id = scores.userid WHERE completed = '3'"
 	rows, err := db.Query(memeQuery)
 	if err != nil {
 		queryError(err, memeQuery)
