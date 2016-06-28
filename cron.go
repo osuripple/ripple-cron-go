@@ -27,6 +27,7 @@ type config struct {
 	CalculatePP              bool
 	FixScoreDuplicates       bool `description:"might take a VERY long time"`
 	CalculateOverallAccuracy bool
+	FixCompletedScores       bool `description:"Set to completed = 2 all scores on beatmaps that aren't ranked."`
 
 	LogQueries bool `description:"You don't wanna do this in prod."`
 	Workers    int  `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
@@ -97,6 +98,18 @@ func main() {
 	if c.DeleteOldPasswordResets {
 		fmt.Print("Starting deleting old password resets...")
 		go op("DELETE FROM password_recovery WHERE t < (NOW() - INTERVAL 10 DAY);")
+		color.Green(" ok!")
+	}
+	if c.FixCompletedScores {
+		fmt.Print("Starting fixing completed = 3 scores on not ranked beatmaps...")
+		go op(`UPDATE scores
+			LEFT JOIN beatmaps ON beatmaps.beatmap_md5 = scores.beatmap_md5
+			SET completed = '2'  
+			WHERE
+				beatmaps.ranked != '1' AND 
+				beatmaps.ranked != '2' AND 
+				beatmaps.ranked != '3' AND
+				beatmaps.ranked != '4';`)
 		color.Green(" ok!")
 	}
 	if c.CacheLevel || c.CacheTotalHits || c.CacheRankedScore {
