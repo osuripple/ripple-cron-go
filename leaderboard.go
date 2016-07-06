@@ -27,7 +27,6 @@ func (l lbUserSlice) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
-// TODO(howl): respect conf.LogQueries
 func opBuildLeaderboard() {
 	defer wg.Done()
 	// creating a new db instance so that we don't have to execute everything
@@ -39,7 +38,8 @@ func opBuildLeaderboard() {
 	}
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
-	initQuery := "SELECT users_stats.id, pp_std, ranked_score_taiko, ranked_score_ctb, ranked_score_mania FROM users_stats INNER JOIN users ON users.id = users_stats.id WHERE privileges & 1 > 0"
+	const initQuery = "SELECT users_stats.id, pp_std, ranked_score_taiko, ranked_score_ctb, ranked_score_mania FROM users_stats INNER JOIN users ON users.id = users_stats.id WHERE privileges & 1 > 0"
+	logquery(initQuery, nil)
 	rows, err := db.Query(initQuery)
 	if err != nil {
 		queryError(err, initQuery)
@@ -83,20 +83,28 @@ func opBuildLeaderboard() {
 		// remove last two characters (`, `)
 		modeInsert = modeInsert[:len(modeInsert)-2]
 		// In this case, it is really important to truncate BEFORE and then add the insert.
-		_, err := db.Exec("LOCK TABLES leaderboard_" + modeToString(modeID) + " WRITE")
+		q := "LOCK TABLES leaderboard_" + modeToString(modeID) + " WRITE"
+		logquery(q, nil)
+		_, err := db.Exec(q)
 		if err != nil {
-			queryError(err, "LOCK TABLES leaderboard_"+modeToString(modeID)+" WRITE")
+			queryError(err, q)
 			return
 		}
-		_, err = db.Exec("TRUNCATE TABLE leaderboard_" + modeToString(modeID))
+
+		q = "TRUNCATE TABLE leaderboard_" + modeToString(modeID)
+		logquery(q, nil)
+		_, err = db.Exec(q)
 		if err != nil {
-			queryError(err, "TRUNCATE TABLE leaderboard_"+modeToString(modeID))
+			queryError(err, q)
 		}
+		logquery(modeInsert, params)
 		_, err = db.Exec(modeInsert, params...)
 		if err != nil {
 			queryError(err, "<modeInsert>")
 		}
+
 		_, err = db.Exec("UNLOCK TABLES")
+		logquery("UNLOCK TABLES", nil)
 		if err != nil {
 			queryError(err, "UNLOCK TABLES")
 			return

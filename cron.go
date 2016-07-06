@@ -172,16 +172,7 @@ var execOperations = make(chan operation, 100000)
 
 func worker() {
 	for op := range execOperations {
-		if c.LogQueries {
-			// porcodio go se sei odioso a volte
-			a := []interface{}{
-				"=>",
-				op.query,
-				"| params:",
-			}
-			a = append(a, op.params...)
-			fmt.Println(a...)
-		}
+		logquery(op.query, op.params)
 		_, err := db.Exec(op.query, op.params...)
 		if err != nil {
 			queryError(err, op.query, op.params...)
@@ -195,4 +186,17 @@ func queryError(err error, query string, params ...interface{}) {
 ===> %s
 ===> params: %v
 ===> error: %v`, query, params, err)
+}
+
+func logquery(q string, params []interface{}) {
+	if c.LogQueries {
+		// porcodio go se sei odioso a volte
+		a := []interface{}{
+			"=>",
+			q,
+			"| params:",
+		}
+		a = append(a, params...)
+		fmt.Println(a...)
+	}
 }
