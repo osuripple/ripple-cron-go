@@ -97,9 +97,17 @@ func opCalculateOverallAccuracy() {
 	}
 
 	for userid, info := range data {
+		var accuracies string
+		var params []interface{}
 		for mode, scores := range info {
-			op("UPDATE users_stats SET avg_accuracy_"+modes[mode]+" = ? WHERE id = ?", scores.Weighten(), userid)
+			accuracies += "avg_accuracy_" + modes[mode] + " = ?"
+			params = append(params, scores.Weighten())
+			if mode != len(info)-1 {
+				accuracies += ", "
+			}
 		}
+		params = append(params, userid)
+		op("UPDATE users_stats SET "+accuracies+" WHERE id = ?", params...)
 	}
 
 	color.Green("> CalculateOverallAccuracy: done!")
