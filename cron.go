@@ -103,7 +103,7 @@ func main() {
 	if c.FixCompletedScores {
 		fmt.Print("Starting fixing completed = 3 scores on not ranked beatmaps...")
 		go op(`UPDATE scores
-			LEFT JOIN beatmaps ON beatmaps.beatmap_md5 = scores.beatmap_md5
+			INNER JOIN beatmaps ON beatmaps.beatmap_md5 = scores.beatmap_md5
 			SET completed = '2'  
 			WHERE
 				beatmaps.ranked != '1' AND 

@@ -39,7 +39,7 @@ func opBuildLeaderboard() {
 	}
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
-	initQuery := "SELECT users_stats.id, pp_std, ranked_score_taiko, ranked_score_ctb, ranked_score_mania FROM users_stats LEFT JOIN users ON users.id = users_stats.id WHERE privileges & 1 > 0"
+	initQuery := "SELECT users_stats.id, pp_std, ranked_score_taiko, ranked_score_ctb, ranked_score_mania FROM users_stats INNER JOIN users ON users.id = users_stats.id WHERE privileges & 1 > 0"
 	rows, err := db.Query(initQuery)
 	if err != nil {
 		queryError(err, initQuery)
