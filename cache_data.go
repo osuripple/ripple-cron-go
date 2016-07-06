@@ -23,8 +23,7 @@ func opCacheData() {
 		scores.score, scores.completed, scores.300_count,
 		scores.100_count, scores.50_count
 	FROM scores
-	LEFT JOIN users ON users.id=scores.userid
-	WHERE users.allowed = '1'`
+	LEFT JOIN users ON users.id=scores.userid`
 	rows, err := db.Query(fetchQuery)
 	if err != nil {
 		queryError(err, fetchQuery)

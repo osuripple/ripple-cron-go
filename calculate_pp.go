@@ -15,7 +15,7 @@ type ppUserMode struct {
 func opCalculatePP() {
 	defer wg.Done()
 
-	const ppQuery = "SELECT scores.userid, pp, scores.play_mode FROM scores LEFT JOIN users ON users.id=scores.userid WHERE completed = '3' AND users.allowed = '1' ORDER BY pp DESC"
+	const ppQuery = "SELECT scores.userid, pp, scores.play_mode FROM scores LEFT JOIN users ON users.id=scores.userid WHERE completed = '3' ORDER BY pp DESC"
 	rows, err := db.Query(ppQuery)
 	if err != nil {
 		queryError(err, ppQuery)
