@@ -17,7 +17,7 @@ type calculateOverallAccuracyElement struct {
 }
 
 func (c calculateOverallAccuracyElement) g() float64 {
-	if c.mode == 0 {
+	if hasPP(c.mode) {
 		return c.pp
 	}
 	return c.accuracy

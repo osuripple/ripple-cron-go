@@ -22,7 +22,7 @@ func opCalculatePP() {
 		return
 	}
 
-	users := make(map[int]*ppUserMode)
+	users := make(map[int]*[4]*ppUserMode)
 	var count int
 
 	for rows.Next() {
@@ -40,20 +40,30 @@ func opCalculatePP() {
 			continue
 		}
 		if users[userid] == nil {
-			users[userid] = &ppUserMode{}
+			users[userid] = &[4]*ppUserMode{
+				new(ppUserMode),
+				new(ppUserMode),
+				new(ppUserMode),
+				new(ppUserMode),
+			}
 		}
-		if users[userid].countScores > 100 {
+		if users[userid][playMode].countScores > 100 {
 			continue
 		}
-		currentScorePP := round(round(ppAmt) * math.Pow(0.95, float64(users[userid].countScores)))
-		users[userid].countScores++
-		users[userid].ppTotal += int(currentScorePP)
+		currentScorePP := round(round(ppAmt) * math.Pow(0.95, float64(users[userid][playMode].countScores)))
+		users[userid][playMode].countScores++
+		users[userid][playMode].ppTotal += int(currentScorePP)
 		count++
 	}
 	rows.Close()
 
-	for userid, ppUM := range users {
-		op("UPDATE users_stats SET pp_std = ? WHERE id = ?", ppUM.ppTotal, userid)
+	for userid, pps := range users {
+		for mode, ppUM := range *pps {
+			if !hasPP(mode) {
+				continue
+			}
+			op("UPDATE users_stats SET pp_"+modeToString(mode)+" = ? WHERE id = ?", ppUM.ppTotal, userid)
+		}
 	}
 
 	color.Green("> CalculatePP: done!")
