@@ -28,6 +28,7 @@ type config struct {
 	FixScoreDuplicates       bool `description:"might take a VERY long time"`
 	CalculateOverallAccuracy bool
 	FixCompletedScores       bool `description:"Set to completed = 2 all scores on beatmaps that aren't ranked."`
+	RemoveDonorOnExpired     bool
 
 	LogQueries bool `description:"You don't wanna do this in prod."`
 	Workers    int  `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
@@ -112,6 +113,11 @@ func main() {
 				beatmaps.ranked != '4';`)
 		color.Green(" ok!")
 	}
+	if c.RemoveDonorOnExpired {
+		fmt.Println("Removing donor privileges on users where donor expired...")
+		go op("UPDATE users SET privileges = privileges & ~4 WHERE donor_expire <= UNIX_TIMESTAMP() AND privileges & 4 > 0")
+		color.Green(" ok!")
+	}
 	if c.CacheLevel || c.CacheTotalHits || c.CacheRankedScore {
 		fmt.Print("Starting caching of various user stats...")
 		wg.Add(1)
@@ -155,6 +161,7 @@ func main() {
 	color.Yellow("Waiting for workers to finish...")
 	close(execOperations)
 	chanWg.Wait()
+	conf.Export(c, "cron.conf")
 }
 
 // db operation to be made, generally used for execOperations
