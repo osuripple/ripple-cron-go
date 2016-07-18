@@ -114,7 +114,7 @@ func main() {
 		color.Green(" ok!")
 	}
 	if c.RemoveDonorOnExpired {
-		fmt.Println("Removing donor privileges on users where donor expired...")
+		fmt.Print("Removing donor privileges on users where donor expired...")
 		go op("UPDATE users SET privileges = privileges & ~4 WHERE donor_expire <= UNIX_TIMESTAMP() AND privileges & 4 > 0")
 		color.Green(" ok!")
 	}
