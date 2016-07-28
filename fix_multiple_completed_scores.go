@@ -28,11 +28,10 @@ func opFixMultipleCompletedScores() {
 	}
 	fmt.Println("> FixMultipleCompletedScores: Fetched, now finding bugged completed scores...")
 
-	var ops int64
 	fixed := []int{}
 	for i := 0; i < len(scores); i++ {
 		if i%1000 == 0 {
-			fmt.Println("> FixMultipleCompletedScores:", ops)
+			fmt.Println("> FixMultipleCompletedScores:", i)
 		}
 		if contains(fixed, scores[i].id) {
 			continue
