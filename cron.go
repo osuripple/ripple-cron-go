@@ -20,15 +20,16 @@ type config struct {
 	CacheTotalHits    bool
 	CacheLevel        bool
 
-	DeleteOldPasswordResets  bool
-	CleanReplays             bool
-	DeleteReplayCache        bool
-	BuildLeaderboards        bool
-	CalculatePP              bool
-	FixScoreDuplicates       bool `description:"might take a VERY long time"`
-	CalculateOverallAccuracy bool
-	FixCompletedScores       bool `description:"Set to completed = 2 all scores on beatmaps that aren't ranked."`
-	RemoveDonorOnExpired     bool
+	DeleteOldPasswordResets    bool
+	CleanReplays               bool
+	DeleteReplayCache          bool
+	BuildLeaderboards          bool
+	CalculatePP                bool
+	FixScoreDuplicates         bool `description:"might take a VERY long time"`
+	CalculateOverallAccuracy   bool
+	FixCompletedScores         bool `description:"Set to completed = 2 all scores on beatmaps that aren't ranked."`
+	RemoveDonorOnExpired       bool
+	FixMultipleCompletedScores bool `description:"Set completed=2 if multiple completed=3 scores for same beatmap and user are present."`
 
 	LogQueries bool `description:"You don't wanna do this in prod."`
 	Workers    int  `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
@@ -61,8 +62,8 @@ func main() {
 	}
 
 	fmt.Println(`
-           ___ _ __ ___  _ __  
-          / __| '__/ _ \| '_ \ 
+           ___ _ __ ___  _ __
+          / __| '__/ _ \| '_ \
          | (__| | | (_) | | | |
           \___|_|  \___/|_| |_|
 `)
@@ -105,10 +106,10 @@ func main() {
 		fmt.Print("Starting fixing completed = 3 scores on not ranked beatmaps...")
 		go op(`UPDATE scores
 			INNER JOIN beatmaps ON beatmaps.beatmap_md5 = scores.beatmap_md5
-			SET completed = '2'  
+			SET completed = '2'
 			WHERE
-				beatmaps.ranked != '1' AND 
-				beatmaps.ranked != '2' AND 
+				beatmaps.ranked != '1' AND
+				beatmaps.ranked != '2' AND
 				beatmaps.ranked != '3' AND
 				beatmaps.ranked != '4';`)
 		color.Green(" ok!")
@@ -154,7 +155,12 @@ func main() {
 		go opCalculateOverallAccuracy()
 		color.Green(" ok!")
 	}
-
+	if c.FixMultipleCompletedScores {
+		fmt.Print("Starting fixing multiple completed scores...")
+		wg.Add(1)
+		go opFixMultipleCompletedScores()
+		color.Green(" ok!")
+	}
 	wg.Wait()
 	color.Green("Data elaboration has been terminated.")
 	color.Green("Execution time: %.4fs", time.Now().Sub(timeAtStart).Seconds())
@@ -197,7 +203,7 @@ func queryError(err error, query string, params ...interface{}) {
 
 func logquery(q string, params []interface{}) {
 	if c.LogQueries {
-		// porcodio go se sei odioso a volte
+		// porcodio go se sei odioso
 		a := []interface{}{
 			"=>",
 			q,

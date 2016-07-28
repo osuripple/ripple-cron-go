@@ -10,7 +10,7 @@ type score struct {
 	id         int
 	beatmapMD5 string
 	userid     int
-	score      int
+	score      int64
 	maxCombo   int
 	mods       int
 	playMode   int
