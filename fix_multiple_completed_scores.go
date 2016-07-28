@@ -31,8 +31,7 @@ func opFixMultipleCompletedScores() {
 	var ops int64
 	fixed := []int{}
 	for i := 0; i < len(scores); i++ {
-		ops++
-		if ops%1000 == 0 {
+		if i%1000 == 0 {
 			fmt.Println("> FixMultipleCompletedScores:", ops)
 		}
 		if contains(fixed, scores[i].id) {
@@ -43,7 +42,7 @@ func opFixMultipleCompletedScores() {
 				continue
 			}
 			if (scores[j].id != scores[i].id && scores[j].beatmapMD5 == scores[i].beatmapMD5 && scores[j].userid == scores[i].userid && scores[j].playMode == scores[i].playMode) {
-				fmt.Printf("> FixMultipleCompletedScores: Found duplicated completed score (%d/%d)\n", scores[i].id, duplicate.id)
+				fmt.Printf("> FixMultipleCompletedScores: Found duplicated completed score (%d/%d)\n", scores[i].id, scores[j].id)
 				if (scores[j].score > scores[i].score) {
 					op("UPDATE scores SET completed = 2 WHERE id = ?", scores[i].id)
 				} else {
