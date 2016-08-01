@@ -38,7 +38,7 @@ import (
 
 func opTimeConsumingTask() {
 	defer wg.Done()
-	
+
 	time.Sleep(time.Second)
 	color.Green("> TimeConsumingTask: done!", count)
 }
@@ -56,5 +56,5 @@ Then you would add a bool in the `config` struct to enable/disable the task, the
 ```
 
 ## License
-
-MIT
+All code in this repository is licensed under the GNU AGPL 3 License.  
+See the "LICENSE" file for more information.
