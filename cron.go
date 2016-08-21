@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -116,7 +117,12 @@ func main() {
 	}
 	if c.RemoveDonorOnExpired {
 		fmt.Print("Removing donor privileges on users where donor expired...")
-		go op("UPDATE users SET privileges = privileges & ~4 WHERE donor_expire <= UNIX_TIMESTAMP() AND privileges & 4 > 0")
+		go func() {
+			_, err := http.Get("http://127.0.0.1:3366/api/v1/clear_donor")
+			if err != nil {
+				color.Red("%v", err)
+			}
+		}()
 		color.Green(" ok!")
 	}
 	if c.CacheLevel || c.CacheTotalHits || c.CacheRankedScore {
