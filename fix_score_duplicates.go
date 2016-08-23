@@ -62,7 +62,7 @@ func opFixScoreDuplicates() {
 		}
 		for j := i + 1; j < len(scores); j++ {
 			if ops%5000000 == 0 {
-				fmt.Println("> FixScoreDuplicates:", ops)
+				verboseln("> FixScoreDuplicates:", ops)
 			}
 			if scores[i].sameAs(scores[j]) && !contains(remove, scores[j].id) {
 				fmt.Println("> FixScoreDuplicates: found one!")

@@ -29,7 +29,7 @@ func opCleanReplays() {
 	count := 0
 	for rows.Next() {
 		if count%50 == 0 && count != 0 {
-			fmt.Println("> CleanReplays:", count, "replays cleared")
+			verboseln("> CleanReplays:", count, "replays cleared")
 		}
 		var scoreID int
 		err := rows.Scan(&scoreID)

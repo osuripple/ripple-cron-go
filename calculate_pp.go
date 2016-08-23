@@ -27,7 +27,7 @@ func opCalculatePP() {
 
 	for rows.Next() {
 		if count%1000 == 0 {
-			fmt.Println("> CalculatePP:", count)
+			verboseln("> CalculatePP:", count)
 		}
 		var (
 			userid   int

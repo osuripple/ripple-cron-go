@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"net/http"
 	"sync"
@@ -32,8 +33,7 @@ type config struct {
 	RemoveDonorOnExpired       bool
 	FixMultipleCompletedScores bool `description:"Set completed=2 if multiple completed=3 scores for same beatmap and user are present."`
 
-	LogQueries bool `description:"You don't wanna do this in prod."`
-	Workers    int  `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
+	Workers int `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
 
 var db *sql.DB
@@ -43,6 +43,16 @@ var c = config{
 }
 var wg sync.WaitGroup
 var chanWg sync.WaitGroup
+var v bool
+var vv bool
+
+func init() {
+	flag.BoolVar(&v, "v", false, "verbose")
+	flag.BoolVar(&vv, "vv", false, "very verbose (LogQueries)")
+	flag.Parse()
+
+	v = vv || v
+}
 
 func main() {
 	// Set up the configuration.
@@ -208,7 +218,7 @@ func queryError(err error, query string, params ...interface{}) {
 }
 
 func logquery(q string, params []interface{}) {
-	if c.LogQueries {
+	if vv {
 		// porcodio go se sei odioso
 		a := []interface{}{
 			"=>",
@@ -217,5 +227,16 @@ func logquery(q string, params []interface{}) {
 		}
 		a = append(a, params...)
 		fmt.Println(a...)
+	}
+}
+
+func verbosef(format string, args ...interface{}) {
+	if v {
+		fmt.Printf(format, args...)
+	}
+}
+func verboseln(args ...interface{}) {
+	if v {
+		fmt.Println(args...)
 	}
 }

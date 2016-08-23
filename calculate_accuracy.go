@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/fatih/color"
@@ -17,7 +16,7 @@ func opCalculateAccuracy() {
 	count := 0
 	for rows.Next() {
 		if count%1000 == 0 {
-			fmt.Println("> CalculateAccuracy:", count)
+			verboseln("> CalculateAccuracy:", count)
 		}
 		var (
 			id        int

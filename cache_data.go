@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 
 	"git.zxq.co/ripple/ocl"
@@ -38,7 +37,7 @@ func opCacheData() {
 	// analyse every result row of fetchQuery
 	for rows.Next() {
 		if count%1000 == 0 {
-			fmt.Println("> CacheData:", count)
+			verboseln("> CacheData:", count)
 		}
 		var (
 			uid       int
@@ -88,7 +87,7 @@ func opCacheData() {
 		count = 0
 		for rows.Next() {
 			if count%100 == 0 {
-				fmt.Println("> CacheLevel:", count)
+				verboseln("> CacheLevel:", count)
 			}
 			var (
 				id    int
