@@ -128,7 +128,7 @@ func main() {
 	if c.RemoveDonorOnExpired {
 		fmt.Print("Removing donor privileges on users where donor expired...")
 		go func() {
-			_, err := http.Get("http://127.0.0.1:3366/api/v1/clear_donor")
+			_, err := http.Post("http://127.0.0.1:3366/api/v1/clear_donor", "", nil)
 			if err != nil {
 				color.Red("%v", err)
 			}
