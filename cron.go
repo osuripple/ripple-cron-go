@@ -22,16 +22,17 @@ type config struct {
 	CacheTotalHits    bool
 	CacheLevel        bool
 
-	DeleteOldPasswordResets    bool
-	CleanReplays               bool
-	DeleteReplayCache          bool
-	BuildLeaderboards          bool
-	CalculatePP                bool
-	FixScoreDuplicates         bool `description:"might take a VERY long time"`
-	CalculateOverallAccuracy   bool
-	FixCompletedScores         bool `description:"Set to completed = 2 all scores on beatmaps that aren't ranked."`
-	RemoveDonorOnExpired       bool
-	FixMultipleCompletedScores bool `description:"Set completed=2 if multiple completed=3 scores for same beatmap and user are present."`
+	DeleteOldPasswordResets       bool
+	CleanReplays                  bool
+	DeleteReplayCache             bool
+	BuildLeaderboards             bool
+	CalculatePP                   bool
+	FixScoreDuplicates            bool `description:"might take a VERY long time"`
+	CalculateOverallAccuracy      bool
+	FixCompletedScores            bool `description:"Set to completed = 2 all scores on beatmaps that aren't ranked."`
+	UnrankScoresOnInvalidBeatmaps bool `description:"Set to completed = 2 all scores on beatmaps that are not in the database."`
+	RemoveDonorOnExpired          bool
+	FixMultipleCompletedScores    bool `description:"Set completed=2 if multiple completed=3 scores for same beatmap and user are present."`
 
 	Workers int `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
@@ -123,6 +124,13 @@ func main() {
 				beatmaps.ranked != '2' AND
 				beatmaps.ranked != '3' AND
 				beatmaps.ranked != '4';`)
+		color.Green(" ok!")
+	}
+	if c.UnrankScoresOnInvalidBeatmaps {
+		fmt.Print("Unranking scores on invalid beatmaps...")
+		go op(`DELETE FROM scores
+		LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5
+		WHERE beatmaps.beatmap_md5 IS NULL`)
 		color.Green(" ok!")
 	}
 	if c.RemoveDonorOnExpired {
