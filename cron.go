@@ -128,7 +128,7 @@ func main() {
 	}
 	if c.UnrankScoresOnInvalidBeatmaps {
 		fmt.Print("Unranking scores on invalid beatmaps...")
-		go op(`DELETE FROM scores
+		go op(`DELETE scores.* FROM scores
 		LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5
 		WHERE beatmaps.beatmap_md5 IS NULL`)
 		color.Green(" ok!")
