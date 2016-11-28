@@ -113,7 +113,7 @@ func main() {
 	}
 	if c.DeleteOldPasswordResets {
 		fmt.Print("Starting deleting old password resets...")
-		go op("DELETE FROM password_recovery WHERE t < (NOW() - INTERVAL 10 DAY);")
+		go op("DELETE FROM password_recovery WHERE t < (NOW() - INTERVAL 1 DAY);")
 		color.Green(" ok!")
 	}
 	if c.FixCompletedScores {
