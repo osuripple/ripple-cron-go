@@ -14,25 +14,27 @@ import (
 )
 
 type config struct {
-	DSN       string
-	RippleDir string `description:"The ripple folder (e.g. /var/www/ripple, NOT /var/www/ripple/osu.ppy.sh). Write the directory relatively to where the ripple-cron-go executable is placed."`
+	DSN          string
+	RippleDir    string `description:"The ripple folder (e.g. /var/www/ripple, NOT /var/www/ripple/osu.ppy.sh). Write the directory relatively to where the ripple-cron-go executable is placed."`
+	HanayoFolder string
 
 	CalculateAccuracy bool
 	CacheRankedScore  bool
 	CacheTotalHits    bool
 	CacheLevel        bool
 
-	DeleteOldPasswordResets       bool
-	CleanReplays                  bool
-	DeleteReplayCache             bool
-	BuildLeaderboards             bool
-	CalculatePP                   bool
-	FixScoreDuplicates            bool `description:"might take a VERY long time"`
-	CalculateOverallAccuracy      bool
-	FixCompletedScores            bool `description:"Set to completed = 2 all scores on beatmaps that aren't ranked."`
-	UnrankScoresOnInvalidBeatmaps bool `description:"Set to completed = 2 all scores on beatmaps that are not in the database."`
-	RemoveDonorOnExpired          bool
-	FixMultipleCompletedScores    bool `description:"Set completed=2 if multiple completed=3 scores for same beatmap and user are present."`
+	DeleteOldPasswordResets        bool
+	CleanReplays                   bool
+	DeleteReplayCache              bool
+	BuildLeaderboards              bool
+	CalculatePP                    bool
+	FixScoreDuplicates             bool `description:"might take a VERY long time"`
+	CalculateOverallAccuracy       bool
+	FixCompletedScores             bool `description:"Set to completed = 2 all scores on beatmaps that aren't ranked."`
+	UnrankScoresOnInvalidBeatmaps  bool `description:"Set to completed = 2 all scores on beatmaps that are not in the database."`
+	RemoveDonorOnExpired           bool
+	FixMultipleCompletedScores     bool `description:"Set completed=2 if multiple completed=3 scores for same beatmap and user are present."`
+	ClearExpiredProfileBackgrounds bool
 
 	Workers int `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
@@ -185,6 +187,13 @@ func main() {
 		go opFixMultipleCompletedScores()
 		color.Green(" ok!")
 	}
+	if c.ClearExpiredProfileBackgrounds {
+		fmt.Print("Removing profile backgrounds of expired donors...")
+		wg.Add(1)
+		go opClearExpiredProfileBackgrounds()
+		color.Green(" ok!")
+	}
+
 	wg.Wait()
 	color.Green("Data elaboration has been terminated.")
 	color.Green("Execution time: %.4fs", time.Now().Sub(timeAtStart).Seconds())
