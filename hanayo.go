@@ -59,6 +59,9 @@ func opClearExpiredProfileBackgrounds() {
 
 	// remove all elements still left
 	for _, e := range elements {
+		if e == "" {
+			continue
+		}
 		err := os.Remove(c.HanayoFolder + "/static/profbackgrounds/" + e)
 		if err != nil {
 			color.Red("> ClearExpiredProfileBackgrounds: failed to delete a background: %v", err)
