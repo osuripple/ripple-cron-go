@@ -10,6 +10,9 @@ So I decided to rewrite it to be better performant, and what better language to 
 
 This is the result: https://asciinema.org/a/42583 (watch the video especially for the last 30 seconds, as you can see the true power of ripple-cron-go).
 
+- Origin: https://git.zxq.co/ripple/ripple-cron-go
+- Mirror: https://github.com/osuripple/ripple-cron-go
+
 ## Installing
 
 Assuming you have Go installed and your GOPATH set up
