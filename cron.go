@@ -35,6 +35,7 @@ type config struct {
 	RemoveDonorOnExpired           bool
 	FixMultipleCompletedScores     bool `description:"Set completed=2 if multiple completed=3 scores for same beatmap and user are present."`
 	ClearExpiredProfileBackgrounds bool
+	DeleteOldPrivateTokens         bool `description:"Whether to delete old private (private = 1) API tokens (older than a month)"`
 
 	Workers int `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
@@ -126,6 +127,11 @@ func main() {
 				beatmaps.ranked != '2' AND
 				beatmaps.ranked != '3' AND
 				beatmaps.ranked != '4';`)
+		color.Green(" ok!")
+	}
+	if c.DeleteOldPrivateTokens {
+		fmt.Println("Starting deleting old private API tokens")
+		go op(`DELETE FROM tokens WHERE private = 1 AND last_updated < ?`, time.Now().Add(-time.Hour*24*30))
 		color.Green(" ok!")
 	}
 	if c.UnrankScoresOnInvalidBeatmaps {
