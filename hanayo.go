@@ -32,7 +32,7 @@ func opClearExpiredProfileBackgrounds() {
 	}
 
 	// get profile backgrounds in db
-	const q = "SELECT uid FROM profile_backgrounds WHERE type = 2"
+	const q = "SELECT uid FROM profile_backgrounds WHERE type = 1"
 	inDB, err := db.Query(q)
 	if err != nil {
 		queryError(err, q)
