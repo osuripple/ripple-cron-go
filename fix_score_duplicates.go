@@ -1,10 +1,6 @@
 package main
 
-import (
-	"fmt"
-
-	"github.com/fatih/color"
-)
+import "github.com/fatih/color"
 
 type score struct {
 	id         int
@@ -51,7 +47,7 @@ func opFixScoreDuplicates() {
 		scores = append(scores, currentScore)
 	}
 
-	fmt.Println("> FixScoreDuplicates: Fetched, now finding duplicates...")
+	verboseln("> FixScoreDuplicates: Fetched, now finding duplicates...")
 
 	// duplicate removing
 	remove := []int{}
@@ -65,7 +61,7 @@ func opFixScoreDuplicates() {
 				verboseln("> FixScoreDuplicates:", ops)
 			}
 			if scores[i].sameAs(scores[j]) && !contains(remove, scores[j].id) {
-				fmt.Println("> FixScoreDuplicates: found one!")
+				verboseln("> FixScoreDuplicates: found one!")
 				remove = append(remove, scores[j].id)
 			}
 			ops++

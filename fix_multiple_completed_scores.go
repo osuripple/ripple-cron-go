@@ -1,10 +1,6 @@
 package main
 
-import (
-	"fmt"
-
-	"github.com/fatih/color"
-)
+import "github.com/fatih/color"
 
 func opFixMultipleCompletedScores() {
 	defer wg.Done()
@@ -26,7 +22,7 @@ func opFixMultipleCompletedScores() {
 		)
 		scores = append(scores, currentScore)
 	}
-	fmt.Println("> FixMultipleCompletedScores: Fetched, now finding bugged completed scores...")
+	verboseln("> FixMultipleCompletedScores: Fetched, now finding bugged completed scores...")
 
 	fixed := []int{}
 	for i := 0; i < len(scores); i++ {
@@ -41,7 +37,7 @@ func opFixMultipleCompletedScores() {
 				continue
 			}
 			if scores[j].id != scores[i].id && scores[j].beatmapMD5 == scores[i].beatmapMD5 && scores[j].userid == scores[i].userid && scores[j].playMode == scores[i].playMode {
-				fmt.Printf("> FixMultipleCompletedScores: Found duplicated completed score (%d/%d)\n", scores[i].id, scores[j].id)
+				verbosef("> FixMultipleCompletedScores: Found duplicated completed score (%d/%d)\n", scores[i].id, scores[j].id)
 				if scores[j].score > scores[i].score {
 					op("UPDATE scores SET completed = 2 WHERE id = ?", scores[i].id)
 				} else {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/fatih/color"
@@ -69,9 +68,8 @@ func opCalculatePP() {
 	color.Green("> CalculatePP: done!")
 
 	if c.BuildLeaderboards {
-		fmt.Print("Starting building leaderboards...")
+		verboseln("Starting building leaderboards...")
 		go opBuildLeaderboard()
-		color.Green(" ok!")
 	}
 }
 

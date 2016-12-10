@@ -81,24 +81,13 @@ func main() {
 		return
 	}
 
-	fmt.Println(`
-           ___ _ __ ___  _ __
-          / __| '__/ _ \| '_ \
-         | (__| | | (_) | | | |
-          \___|_|  \___/|_| |_|
-`)
-	color.Green("     (not so) proudly brought to you by")
-	color.Green("              The Ripple Team™")
-	fmt.Println()
-
-	fmt.Print("Starting MySQL connection...")
+	verboseln("Starting MySQL connection")
 	// start database connection
 	db, err = sql.Open("mysql", c.DSN)
 	if err != nil {
-		color.Red(" couldn't start MySQL connection: %v", err)
+		color.Red("couldn't start MySQL connection: %v", err)
 		return
 	}
-	color.Green(" ok!")
 	defer db.Close()
 
 	r = redis.NewClient(&redis.Options{
@@ -107,28 +96,25 @@ func main() {
 	})
 
 	// spawn some workers
-	fmt.Print("Spawning necessary workers...")
+	verboseln("Spawning necessary workers")
 	for i := 0; i < c.Workers; i++ {
 		chanWg.Add(1)
 		go worker()
 	}
-	color.Green(" ok!")
 
 	timeAtStart := time.Now()
 
 	if c.CalculateAccuracy {
-		fmt.Print("Starting accuracy calculator worker...")
+		verboseln("Starting accuracy calculator worker")
 		wg.Add(1)
 		go opCalculateAccuracy()
-		color.Green(" ok!")
 	}
 	if c.DeleteOldPasswordResets {
-		fmt.Print("Starting deleting old password resets...")
+		verboseln("Starting deleting old password resets")
 		go op("DELETE FROM password_recovery WHERE t < (NOW() - INTERVAL 1 DAY);")
-		color.Green(" ok!")
 	}
 	if c.FixCompletedScores {
-		fmt.Print("Starting fixing completed = 3 scores on not ranked beatmaps...")
+		verboseln("Starting fixing completed = 3 scores on not ranked beatmaps")
 		go op(`UPDATE scores
 			INNER JOIN beatmaps ON beatmaps.beatmap_md5 = scores.beatmap_md5
 			SET completed = '2'
@@ -137,77 +123,65 @@ func main() {
 				beatmaps.ranked != '2' AND
 				beatmaps.ranked != '3' AND
 				beatmaps.ranked != '4';`)
-		color.Green(" ok!")
 	}
 	if c.DeleteOldPrivateTokens {
-		fmt.Println("Starting deleting old private API tokens")
+		verboseln("Deleting old private API tokens")
 		go op(`DELETE FROM tokens WHERE private = 1 AND last_updated < ?`, time.Now().Add(-time.Hour*24*30))
-		color.Green(" ok!")
 	}
 	if c.UnrankScoresOnInvalidBeatmaps {
-		fmt.Print("Unranking scores on invalid beatmaps...")
+		verboseln("Unranking scores on invalid beatmaps")
 		go op(`DELETE scores.* FROM scores
 		LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5
 		WHERE beatmaps.beatmap_md5 IS NULL`)
-		color.Green(" ok!")
 	}
 	if c.RemoveDonorOnExpired {
-		fmt.Print("Removing donor privileges on users where donor expired...")
+		verboseln("Removing donor privileges on users where donor expired")
 		go func() {
 			_, err := http.Post("http://127.0.0.1:3366/api/v1/clear_donor", "", nil)
 			if err != nil {
 				color.Red("%v", err)
 			}
 		}()
-		color.Green(" ok!")
 	}
 	if c.CacheLevel || c.CacheTotalHits || c.CacheRankedScore {
-		fmt.Print("Starting caching of various user stats...")
+		verboseln("Starting caching of various user stats")
 		wg.Add(1)
 		go opCacheData()
-		color.Green(" ok!")
 	}
 	if c.CleanReplays {
-		fmt.Print("Starting cleaning useless replays...")
+		verboseln("Starting cleaning useless replays")
 		wg.Add(1)
 		go opCleanReplays()
-		color.Green(" ok!")
 	}
 	if c.DeleteReplayCache {
-		fmt.Print("Starting deleting replay cache...")
+		verboseln("Starting deleting replay cache")
 		wg.Add(1)
 		go opDeleteReplayCache()
-		color.Green(" ok!")
 	}
 	if c.CalculatePP {
-		fmt.Print("Starting calculating pp...")
+		verboseln("Starting calculating pp")
 		wg.Add(2)
 		go opCalculatePP()
-		color.Green(" ok!")
 	}
 	if c.FixScoreDuplicates {
-		fmt.Print("Starting fixing score duplicates...")
+		verboseln("Starting fixing score duplicates")
 		wg.Add(1)
 		go opFixScoreDuplicates()
-		color.Green(" ok!")
 	}
 	if c.CalculateOverallAccuracy {
-		fmt.Print("Starting calculating overall accuracy...")
+		verboseln("Starting calculating overall accuracy")
 		wg.Add(1)
 		go opCalculateOverallAccuracy()
-		color.Green(" ok!")
 	}
 	if c.FixMultipleCompletedScores {
-		fmt.Print("Starting fixing multiple completed scores...")
+		verboseln("Starting fixing multiple completed scores")
 		wg.Add(1)
 		go opFixMultipleCompletedScores()
-		color.Green(" ok!")
 	}
 	if c.ClearExpiredProfileBackgrounds {
-		fmt.Print("Removing profile backgrounds of expired donors...")
+		verboseln("Removing profile backgrounds of expired donors")
 		wg.Add(1)
 		go opClearExpiredProfileBackgrounds()
-		color.Green(" ok!")
 	}
 	if c.SetOnlineUsers {
 		wg.Add(1)
@@ -215,7 +189,7 @@ func main() {
 	}
 
 	wg.Wait()
-	color.Green("Data elaboration has been terminated.")
+	color.Green("Data elaboration has finished.")
 	color.Green("Execution time: %.4fs", time.Now().Sub(timeAtStart).Seconds())
 	color.Yellow("Waiting for workers to finish...")
 	close(execOperations)
