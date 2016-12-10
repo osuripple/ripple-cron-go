@@ -67,3 +67,10 @@ func opClearExpiredProfileBackgrounds() {
 		}
 	}
 }
+
+func opSetOnlineUsers() {
+	defer wg.Done()
+	var users int
+	db.QueryRow("SELECT COUNT(*) FROM users").Scan(&users)
+	r.Set("ripple:registered_users", users, 0)
+}

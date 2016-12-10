@@ -39,6 +39,7 @@ type config struct {
 	FixMultipleCompletedScores     bool `description:"Set completed=2 if multiple completed=3 scores for same beatmap and user are present."`
 	ClearExpiredProfileBackgrounds bool
 	DeleteOldPrivateTokens         bool `description:"Whether to delete old private (private = 1) API tokens (older than a month)"`
+	SetOnlineUsers                 bool
 
 	Workers int `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
@@ -207,6 +208,10 @@ func main() {
 		wg.Add(1)
 		go opClearExpiredProfileBackgrounds()
 		color.Green(" ok!")
+	}
+	if c.SetOnlineUsers {
+		wg.Add(1)
+		go opSetOnlineUsers()
 	}
 
 	wg.Wait()
