@@ -11,12 +11,15 @@ import (
 	"github.com/fatih/color"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/thehowl/conf"
+	"gopkg.in/redis.v5"
 )
 
 type config struct {
-	DSN          string
-	RippleDir    string `description:"The ripple folder (e.g. /var/www/ripple, NOT /var/www/ripple/osu.ppy.sh). Write the directory relatively to where the ripple-cron-go executable is placed."`
-	HanayoFolder string
+	DSN           string
+	RippleDir     string `description:"The ripple folder (e.g. /var/www/ripple, NOT /var/www/ripple/osu.ppy.sh). Write the directory relatively to where the ripple-cron-go executable is placed."`
+	HanayoFolder  string
+	RedisAddr     string
+	RedisPassword string
 
 	CalculateAccuracy bool
 	CacheRankedScore  bool
@@ -45,6 +48,7 @@ var c = config{
 	DSN:     "root@/ripple",
 	Workers: 8,
 }
+var r *redis.Client
 var wg sync.WaitGroup
 var chanWg sync.WaitGroup
 var v bool
@@ -95,6 +99,11 @@ func main() {
 	}
 	color.Green(" ok!")
 	defer db.Close()
+
+	r = redis.NewClient(&redis.Options{
+		Addr:     c.RedisAddr,
+		Password: c.RedisPassword,
+	})
 
 	// spawn some workers
 	fmt.Print("Spawning necessary workers...")
