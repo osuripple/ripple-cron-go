@@ -46,7 +46,7 @@ func opCalculatePP() {
 				new(ppUserMode),
 			}
 		}
-		if users[userid][playMode].countScores > 100 {
+		if users[userid][playMode].countScores > 500 {
 			continue
 		}
 		currentScorePP := round(round(ppAmt) * math.Pow(0.95, float64(users[userid][playMode].countScores)))
