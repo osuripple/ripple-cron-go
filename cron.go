@@ -118,11 +118,7 @@ func main() {
 		go op(`UPDATE scores
 			INNER JOIN beatmaps ON beatmaps.beatmap_md5 = scores.beatmap_md5
 			SET completed = '2'
-			WHERE
-				beatmaps.ranked != '1' AND
-				beatmaps.ranked != '2' AND
-				beatmaps.ranked != '3' AND
-				beatmaps.ranked != '4';`)
+			WHERE beatmaps.ranked < 1 OR beatmaps.ranked > 5;`)
 	}
 	if c.DeleteOldPrivateTokens {
 		verboseln("Deleting old private API tokens")
