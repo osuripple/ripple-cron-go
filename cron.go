@@ -29,7 +29,7 @@ type config struct {
 	DeleteOldPasswordResets        bool
 	CleanReplays                   bool
 	DeleteReplayCache              bool
-	BuildLeaderboards              bool
+	PopulateRedis                  bool
 	CalculatePP                    bool
 	FixScoreDuplicates             bool `description:"might take a VERY long time"`
 	CalculateOverallAccuracy       bool

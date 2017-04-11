@@ -67,9 +67,9 @@ func opCalculatePP() {
 
 	color.Green("> CalculatePP: done!")
 
-	if c.BuildLeaderboards {
-		verboseln("Starting building leaderboards...")
-		go opBuildLeaderboard()
+	if c.PopulateRedis {
+		verboseln("Starting to populate redis...")
+		go opPopulateRedis()
 	}
 }
 
