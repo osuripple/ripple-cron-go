@@ -3,8 +3,8 @@ package main
 import (
 	"strconv"
 
-	"git.zxq.co/ripple/ocl"
 	"github.com/fatih/color"
+	"zxq.co/ripple/ocl"
 )
 
 type s struct {
