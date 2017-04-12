@@ -24,6 +24,8 @@ func opPopulateRedis() {
 		}
 	}
 
+	r.Del("hanayo:country_list")
+
 	const initQuery = "SELECT users_stats.id, users_stats.country, pp_std, ranked_score_taiko, ranked_score_ctb, pp_mania FROM users_stats INNER JOIN users ON users.id = users_stats.id WHERE privileges & 1 > 0"
 
 	rows, err := db.Query(initQuery)
@@ -44,15 +46,23 @@ func opPopulateRedis() {
 			continue
 		}
 
+		country = strings.ToLower(country)
+
+		if country != "xx" && country != "" {
+			r.ZIncrBy("hanayo:country_list", 1, country)
+		}
+
 		for k, v := range pp {
 			r.ZAdd("ripple:leaderboard:"+modes[k], redis.Z{
 				Member: uid,
 				Score:  float64(v),
 			})
-			r.ZAdd("ripple:leaderboard:"+modes[k]+":"+strings.ToLower(country), redis.Z{
-				Member: uid,
-				Score:  float64(v),
-			})
+			if country != "xx" && country != "" {
+				r.ZAdd("ripple:leaderboard:"+modes[k]+":"+country, redis.Z{
+					Member: uid,
+					Score:  float64(v),
+				})
+			}
 		}
 	}
 
