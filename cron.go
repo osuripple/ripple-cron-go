@@ -101,6 +101,7 @@ func main() {
 		chanWg.Add(1)
 		go worker(execOperations)
 	}
+	chanWg.Add(1)
 	go worker(syncOperations)
 
 	timeAtStart := time.Now()
