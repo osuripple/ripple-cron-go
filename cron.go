@@ -99,8 +99,9 @@ func main() {
 	verboseln("Spawning necessary workers")
 	for i := 0; i < c.Workers; i++ {
 		chanWg.Add(1)
-		go worker()
+		go worker(execOperations)
 	}
+	go worker(syncOperations)
 
 	timeAtStart := time.Now()
 
@@ -111,22 +112,22 @@ func main() {
 	}
 	if c.DeleteOldPasswordResets {
 		verboseln("Starting deleting old password resets")
-		go op("DELETE FROM password_recovery WHERE t < (NOW() - INTERVAL 1 DAY);")
+		go opSync("DELETE FROM password_recovery WHERE t < (NOW() - INTERVAL 1 DAY);")
 	}
 	if c.FixCompletedScores {
 		verboseln("Starting fixing completed = 3 scores on not ranked beatmaps")
-		go op(`UPDATE scores
+		go opSync(`UPDATE scores
 			INNER JOIN beatmaps ON beatmaps.beatmap_md5 = scores.beatmap_md5
 			SET completed = '2'
 			WHERE beatmaps.ranked < 1 OR beatmaps.ranked > 5;`)
 	}
 	if c.DeleteOldPrivateTokens {
 		verboseln("Deleting old private API tokens")
-		go op(`DELETE FROM tokens WHERE private = 1 AND last_updated < ?`, time.Now().Add(-time.Hour*24*30))
+		go opSync(`DELETE FROM tokens WHERE private = 1 AND last_updated < ?`, time.Now().Add(-time.Hour*24*30))
 	}
 	if c.UnrankScoresOnInvalidBeatmaps {
 		verboseln("Unranking scores on invalid beatmaps")
-		go op(`DELETE scores.* FROM scores
+		go opSync(`DELETE scores.* FROM scores
 		LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5
 		WHERE beatmaps.beatmap_md5 IS NULL`)
 	}
@@ -202,19 +203,29 @@ type operation struct {
 func op(query string, params ...interface{}) {
 	execOperations <- operation{query, params}
 }
+func opSync(query string, params ...interface{}) {
+	syncOperations <- operation{query, params}
+}
 
 // Operations that can be executed with a simple db.Exec, distributed across 8 workers.
 var execOperations = make(chan operation, 100000)
 
-func worker() {
-	for op := range execOperations {
-		logquery(op.query, op.params)
-		_, err := db.Exec(op.query, op.params...)
-		if err != nil {
-			queryError(err, op.query, op.params...)
-		}
+// Operations that must be executed in order and synchronously.
+var syncOperations = make(chan operation, 20)
+
+func worker(c <-chan operation) {
+	for op := range c {
+		runOperation(op)
 	}
 	chanWg.Done()
+}
+
+func runOperation(op operation) {
+	logquery(op.query, op.params)
+	_, err := db.Exec(op.query, op.params...)
+	if err != nil {
+		queryError(err, op.query, op.params...)
+	}
 }
 
 func queryError(err error, query string, params ...interface{}) {
