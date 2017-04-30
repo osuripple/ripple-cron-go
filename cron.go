@@ -191,6 +191,7 @@ func main() {
 	color.Green("Execution time: %.4fs", time.Now().Sub(timeAtStart).Seconds())
 	color.Yellow("Waiting for workers to finish...")
 	close(execOperations)
+	close(syncOperations)
 	chanWg.Wait()
 	conf.Export(c, "cron.conf")
 }
