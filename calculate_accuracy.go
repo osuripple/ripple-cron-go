@@ -61,7 +61,11 @@ func calculateAccuracy(count300, count100, count50, countgeki, countkatu, countm
 	case 2:
 		fruits := count300 + count100 + count50
 		totalFruits := fruits + countmiss + countkatu
-		accuracy = float64(fruits) / float64(totalFruits)
+		if (totalFruits == 0) {
+			accuracy = 1
+		} else {
+			accuracy = float64(fruits) / float64(totalFruits)
+		}
 	case 3:
 		totalPoints := (count50*50 + count100*100 + countkatu*200 + count300*300 + countgeki*300)
 		maxHits := (countmiss + count50 + count100 + count300 + countgeki + countkatu)
