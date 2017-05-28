@@ -61,7 +61,7 @@ func calculateAccuracy(count300, count100, count50, countgeki, countkatu, countm
 	case 2:
 		fruits := count300 + count100 + count50
 		totalFruits := fruits + countmiss + countkatu
-		if (totalFruits == 0) {
+		if totalFruits == 0 {
 			accuracy = 1
 		} else {
 			accuracy = float64(fruits) / float64(totalFruits)
