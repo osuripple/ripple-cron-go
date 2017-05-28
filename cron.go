@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/fatih/color"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"github.com/thehowl/conf"
 	"gopkg.in/redis.v5"
 )
@@ -44,7 +44,7 @@ type config struct {
 	Workers int `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
 
-var db *sql.DB
+var db *sqlx.DB
 var c = config{
 	DSN:     "root@/ripple",
 	Workers: 8,
@@ -83,7 +83,7 @@ func main() {
 
 	verboseln("Starting MySQL connection")
 	// start database connection
-	db, err = sql.Open("mysql", c.DSN)
+	db, err = sqlx.Open("mysql", c.DSN)
 	if err != nil {
 		color.Red("couldn't start MySQL connection: %v", err)
 		return
