@@ -1,76 +1,71 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/fatih/color"
 )
 
 func opCleanReplays() {
 	defer wg.Done()
-	dir := removeTrailingSlash(c.RippleDir) + "/osu.ppy.sh/replays"
-	if finfo, err := os.Stat(dir); err != nil || !finfo.IsDir() {
-		color.Red("> CleanReplays: failed to start cleaning replays:")
-		if err != nil {
-			color.Red("> %v", err)
-		} else {
-			color.Red("> %s is a file, not a folder", dir)
-		}
+
+	if c.ReplayFolder == "" {
 		return
 	}
 
-	const failedReplays = "SELECT id FROM scores WHERE completed != 3"
-	rows, err := db.Query(failedReplays)
+	// we're using os.Open instead of ioutil.Readdir
+	// so that we can take advantage of Readdirnames (which uses far less
+	// memory)
+	dir, err := os.Open(c.ReplayFolder)
 	if err != nil {
-		queryError(err, failedReplays)
+		color.Red("> CleanReplays: can't read dir %v", err)
+		return
 	}
-	count := 0
-	for rows.Next() {
-		if count%50 == 0 && count != 0 {
-			verboseln("> CleanReplays:", count, "replays cleared")
-		}
-		var scoreID int
-		err := rows.Scan(&scoreID)
-		if err != nil {
-			queryError(err, failedReplays)
-			continue
-		}
-		filename := fmt.Sprintf("%s/replays/replay_%d.osr", dir, scoreID)
-		// We don't check if the file exists, because that would be an useless I/O operation
-		// TODO: WorkGroup?
-		os.Remove(filename)
-		count++
+
+	names, err := dir.Readdirnames(-1)
+	dir.Close()
+	if err != nil {
+		color.Red("> CleanReplays: can't read names of dir %v", err)
+		return
 	}
-	rows.Close()
+
+	repsFolder := replaysToIntSlice(names)
+
+	// get ids of all scores in database
+	var repsDB []int
+	const scoresQuery = "SELECT id FROM scores WHERE completed = 3"
+	err = db.Select(&repsDB, scoresQuery)
+	if err != nil {
+		queryError(err, scoresQuery)
+		return
+	}
+
+	// remove from repsFolder all replays
+	for _, i := range repsDB {
+		for pos, j := range repsFolder {
+			if i == j {
+				repsFolder[pos] = repsFolder[len(repsFolder)-1]
+				repsFolder = repsFolder[:len(repsFolder)-1]
+				break
+			}
+		}
+	}
+
 	color.Green("> CleanReplays: done!")
 }
-func removeTrailingSlash(s string) string {
-	if s[len(s)-1] == '/' {
-		return s[:len(s)-1]
-	}
-	return s
-}
 
-func opDeleteReplayCache() {
-	defer wg.Done()
-
-	dir := removeTrailingSlash(c.RippleDir) + "/osu.ppy.sh/replays_full"
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		color.Red("> DeleteReplaysFull: Couldn't get files from replays_full directory: %v", err)
-		return
-	}
-
-	count := 0
-	for _, file := range files {
-		err := os.Remove(dir + "/" + file.Name())
+func replaysToIntSlice(replays []string) []int {
+	i := make([]int, 0, len(replays))
+	var j int
+	var err error
+	for _, r := range replays {
+		j, err = strconv.Atoi(strings.TrimPrefix(strings.TrimSuffix(r, ".osr"), "replay_"))
 		if err != nil {
-			color.Red("> DeleteReplaysFull: couldn't remove file %s: %v", file.Name(), err)
 			continue
 		}
-		count++
+		i = append(i, j)
 	}
-	color.Green("> DeleteReplaysFull: done! %d replays deleted", count)
+	return i
 }

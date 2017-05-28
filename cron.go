@@ -16,7 +16,7 @@ import (
 
 type config struct {
 	DSN           string
-	RippleDir     string `description:"The ripple folder (e.g. /var/www/ripple, NOT /var/www/ripple/osu.ppy.sh). Write the directory relatively to where the ripple-cron-go executable is placed."`
+	ReplayFolder  string
 	HanayoFolder  string
 	RedisAddr     string
 	RedisPassword string
@@ -28,7 +28,6 @@ type config struct {
 
 	DeleteOldPasswordResets        bool
 	CleanReplays                   bool
-	DeleteReplayCache              bool
 	PopulateRedis                  bool
 	CalculatePP                    bool
 	FixScoreDuplicates             bool `description:"might take a VERY long time"`
@@ -150,11 +149,6 @@ func main() {
 		verboseln("Starting cleaning useless replays")
 		wg.Add(1)
 		go opCleanReplays()
-	}
-	if c.DeleteReplayCache {
-		verboseln("Starting deleting replay cache")
-		wg.Add(1)
-		go opDeleteReplayCache()
 	}
 	if c.CalculatePP {
 		verboseln("Starting calculating pp")
