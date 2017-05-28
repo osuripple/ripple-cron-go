@@ -53,6 +53,13 @@ func opCleanReplays() {
 		}
 	}
 
+	for _, r := range repsFolder {
+		err = os.Remove(c.ReplayFolder + "/replay_" + strconv.Itoa(r) + ".osr")
+		if err != nil {
+			color.Red("> CleanReplays: %s: %v", r, err)
+		}
+	}
+
 	color.Green("> CleanReplays: done!")
 }
 
