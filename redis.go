@@ -31,7 +31,7 @@ func opPopulateRedis() {
 	const initQuery = `
 SELECT
 	users_stats.id, users_stats.country, pp_std,
-	ranked_score_taiko, ranked_score_ctb, pp_mania,
+	pp_taiko, ranked_score_ctb, pp_mania,
 	playcount_std, playcount_taiko, playcount_ctb, playcount_mania,
 	users.latest_activity
 FROM users_stats INNER JOIN users ON users.id = users_stats.id WHERE privileges & 1 > 0`
