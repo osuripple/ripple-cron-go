@@ -13,12 +13,12 @@ import (
 type calculateOverallAccuracyElement struct {
 	mode     int
 	accuracy *float64
-	pp       float64
+	pp       *float64
 }
 
 func (c calculateOverallAccuracyElement) g() float64 {
 	if hasPP(c.mode) {
-		return c.pp
+		return *c.pp
 	}
 	return *c.accuracy
 }
@@ -81,7 +81,7 @@ func opCalculateOverallAccuracy() {
 		}
 		// silently ignore invalid modes, and null accuracies which for some
 		// reason are a thing. i hate our db schema
-		if el.mode < 0 || el.mode > 3 || el.accuracy == nil {
+		if el.mode < 0 || el.mode > 3 || el.accuracy == nil || el.pp == nil {
 			continue
 		}
 		if data[uid] == nil {
