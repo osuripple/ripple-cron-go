@@ -12,7 +12,7 @@ import (
 
 type calculateOverallAccuracyElement struct {
 	mode     int
-	accuracy float64
+	accuracy *float64
 	pp       float64
 }
 
@@ -20,7 +20,7 @@ func (c calculateOverallAccuracyElement) g() float64 {
 	if hasPP(c.mode) {
 		return c.pp
 	}
-	return c.accuracy
+	return *c.accuracy
 }
 
 type coaeCollection []calculateOverallAccuracyElement
@@ -41,7 +41,7 @@ func (c coaeCollection) Weighten() float64 {
 	var divideTotal float64
 	for i, el := range c {
 		add := math.Pow(0.95, float64(i)) * 100
-		total += el.accuracy * add
+		total += *el.accuracy * add
 		divideTotal += add
 	}
 	if divideTotal == 0 {
@@ -79,8 +79,9 @@ func opCalculateOverallAccuracy() {
 			queryError(err, memeQuery)
 			continue
 		}
-		// silently ignore invalid modes
-		if el.mode < 0 || el.mode > 3 {
+		// silently ignore invalid modes, and null accuracies which for some
+		// reason are a thing. i hate our db schema
+		if el.mode < 0 || el.mode > 3 || el.accuracy == nil {
 			continue
 		}
 		if data[uid] == nil {
