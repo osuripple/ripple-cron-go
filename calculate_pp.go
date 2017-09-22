@@ -34,8 +34,11 @@ func opCalculatePP() {
 			playMode int
 		)
 		err := rows.Scan(&userid, &ppAmt, &playMode)
-		if err != nil || ppAmt == nil {
+		if err != nil {
 			queryError(err, ppQuery)
+			continue
+		}
+		if ppAmt == nil {
 			continue
 		}
 		if users[userid] == nil {
