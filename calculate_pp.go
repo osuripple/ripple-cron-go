@@ -30,11 +30,11 @@ func opCalculatePP() {
 		}
 		var (
 			userid   int
-			ppAmt    float64
+			ppAmt    *float64
 			playMode int
 		)
 		err := rows.Scan(&userid, &ppAmt, &playMode)
-		if err != nil {
+		if err != nil || ppAmt == nil {
 			queryError(err, ppQuery)
 			continue
 		}
@@ -49,7 +49,7 @@ func opCalculatePP() {
 		if users[userid][playMode].countScores > 500 {
 			continue
 		}
-		currentScorePP := round(round(ppAmt) * math.Pow(0.95, float64(users[userid][playMode].countScores)))
+		currentScorePP := round(round(*ppAmt) * math.Pow(0.95, float64(users[userid][playMode].countScores)))
 		users[userid][playMode].countScores++
 		users[userid][playMode].ppTotal += int(currentScorePP)
 		count++
