@@ -61,9 +61,6 @@ func opCalculatePP() {
 
 	for userid, pps := range users {
 		for mode, ppUM := range *pps {
-			if !hasPP(mode) {
-				continue
-			}
 			op("UPDATE users_stats SET pp_"+modeToString(mode)+" = ? WHERE id = ?", ppUM.ppTotal, userid)
 		}
 	}

@@ -17,10 +17,7 @@ type calculateOverallAccuracyElement struct {
 }
 
 func (c calculateOverallAccuracyElement) g() float64 {
-	if hasPP(c.mode) {
-		return *c.pp
-	}
-	return *c.accuracy
+	return *c.pp
 }
 
 type coaeCollection []calculateOverallAccuracyElement
