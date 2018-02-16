@@ -47,7 +47,7 @@ func opFixScoreDuplicates() {
 		scores = append(scores, currentScore)
 	}
 
-	verboseln("> FixScoreDuplicates: Fetched, now finding duplicates...")
+	verboseln("> FixScoreDuplicates: Fetched, now finding duplicates")
 
 	// duplicate removing
 	remove := []int{}
