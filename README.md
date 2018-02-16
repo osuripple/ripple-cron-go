@@ -51,7 +51,7 @@ Then you would add a bool in the `config` struct to enable/disable the task, the
 
 ```go
 	if c.TimeConsumingTask {
-		verboseln("Starting time consuming task...")
+		verboseln("Starting time consuming task")
 		wg.Add(1)
 		go opTimeConsumingTask()
 	}
