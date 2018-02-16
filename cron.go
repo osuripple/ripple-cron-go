@@ -67,7 +67,7 @@ func main() {
 	err := conf.Load(&c, "cron.conf")
 	switch {
 	case err == conf.ErrNoFile:
-		color.Yellow("No cron.conf was found. Creating it...")
+		color.Yellow("No cron.conf was found. Creating it")
 		err := conf.Export(&c, "cron.conf")
 		if err != nil {
 			color.Red("Couldn't create cron.conf: %v.", err)
@@ -84,7 +84,7 @@ func main() {
 	// start database connection
 	db, err = sqlx.Open("mysql", c.DSN)
 	if err != nil {
-		color.Red("couldn't start MySQL connection: %v", err)
+		color.Red("couldn't start MySQL connection: %v.", err)
 		return
 	}
 	defer db.Close()
@@ -181,9 +181,9 @@ func main() {
 	}
 
 	wg.Wait()
-	color.Green("Data elaboration has finished.")
+	color.Green("Data elaboration has finished")
 	color.Green("Execution time: %.4fs", time.Now().Sub(timeAtStart).Seconds())
-	color.Yellow("Waiting for workers to finish...")
+	color.Yellow("Waiting for workers to finish")
 	close(execOperations)
 	close(syncOperations)
 	chanWg.Wait()
