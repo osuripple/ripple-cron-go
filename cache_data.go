@@ -15,6 +15,15 @@ type s struct {
 
 func opCacheData() {
 	defer wg.Done()
+
+	var maxID int
+	const maxIDQuery = "SELECT id FROM users ORDER BY id DESC LIMIT 1"
+	err := db.Get(&maxID, maxIDQuery)
+	if err != nil {
+		queryError(err, maxIDQuery)
+		return
+	}
+
 	// get data
 	const fetchQuery = `
 	SELECT
@@ -22,130 +31,133 @@ func opCacheData() {
 		scores.score, scores.completed, scores.300_count,
 		scores.100_count, scores.50_count
 	FROM scores
-	INNER JOIN users ON users.id=scores.userid`
-	rows, err := db.Query(fetchQuery)
-	if err != nil {
-		queryError(err, fetchQuery)
-		return
-	}
-
-	// set up end map where all the data is
-	data := make(map[int]*[4]*s)
-
-	count := 0
-
-	// analyse every result row of fetchQuery
-	for rows.Next() {
-		if count%1000 == 0 {
-			verboseln("> CacheData:", count)
-		}
-		var (
-			uid       int
-			username  string
-			playMode  int
-			score     int64
-			completed int
-			count300  int
-			count100  int
-			count50   int
-		)
-		err := rows.Scan(&uid, &username, &playMode, &score, &completed, &count300, &count100, &count50)
+	INNER JOIN users ON users.id=scores.userid
+	WHERE scores.userid > ? AND scores.userid <= ?`
+	for minID := 0; minID <= maxID; minID += 1000 {
+		rows, err := db.Query(fetchQuery, minID, minID+1000)
 		if err != nil {
-			queryError(err, fetchQuery)
-			continue
-		}
-		// silently ignore invalid modes
-		if playMode > 3 || playMode < 0 {
-			continue
-		}
-		// create key in map if not already existing
-		if _, ex := data[uid]; !ex {
-			data[uid] = &[4]*s{}
-			for i := 0; i < 4; i++ {
-				data[uid][i] = &s{}
-			}
-		}
-		// if the score counts as completed and top score, add it to the ranked score sum
-		if c.CacheRankedScore && completed == 3 {
-			data[uid][playMode].rankedScore += score
-		}
-		// add to the number of totalhits count of {300,100,50} hits
-		if c.CacheTotalHits {
-			data[uid][playMode].totalHits += int64(count300) + int64(count100) + int64(count50)
-		}
-		count++
-	}
-	rows.Close()
-
-	if c.CacheLevel {
-		const totalScoreQuery = "SELECT id, total_score_std, total_score_taiko, total_score_ctb, total_score_mania FROM users_stats"
-		rows, err := db.Query(totalScoreQuery)
-		if err != nil {
-			queryError(err, totalScoreQuery)
+			queryError(err, fetchQuery, minID, minID+1000)
 			return
 		}
-		count = 0
+
+		// set up end map where all the data is
+		data := make(map[int]*[4]*s, 1000)
+
+		count := 0
+
+		// analyse every result row of fetchQuery
 		for rows.Next() {
-			if count%100 == 0 {
-				verboseln("> CacheLevel:", count)
+			if count%1000 == 0 {
+				verboseln("> CacheData:", count)
 			}
 			var (
-				id    int
-				std   int64
-				taiko int64
-				ctb   int64
-				mania int64
+				uid       int
+				username  string
+				playMode  int
+				score     int64
+				completed int
+				count300  int
+				count100  int
+				count50   int
 			)
-			err := rows.Scan(&id, &std, &taiko, &ctb, &mania)
+			err := rows.Scan(&uid, &username, &playMode, &score, &completed, &count300, &count100, &count50)
 			if err != nil {
-				queryError(err, totalScoreQuery)
+				queryError(err, fetchQuery)
 				continue
 			}
-			if _, ex := data[id]; !ex {
-				data[id] = &[4]*s{}
+			// silently ignore invalid modes
+			if playMode > 3 || playMode < 0 {
+				continue
+			}
+			// create key in map if not already existing
+			if _, ex := data[uid]; !ex {
+				data[uid] = &[4]*s{}
 				for i := 0; i < 4; i++ {
-					data[id][i] = &s{}
+					data[uid][i] = &s{}
 				}
 			}
-			data[id][0].level = ocl.GetLevel(std)
-			data[id][1].level = ocl.GetLevel(taiko)
-			data[id][2].level = ocl.GetLevel(ctb)
-			data[id][3].level = ocl.GetLevel(mania)
+			// if the score counts as completed and top score, add it to the ranked score sum
+			if c.CacheRankedScore && completed == 3 {
+				data[uid][playMode].rankedScore += score
+			}
+			// add to the number of totalhits count of {300,100,50} hits
+			if c.CacheTotalHits {
+				data[uid][playMode].totalHits += int64(count300) + int64(count100) + int64(count50)
+			}
 			count++
 		}
 		rows.Close()
-	}
-	for k, v := range data {
-		if v == nil {
-			continue
+
+		if c.CacheLevel {
+			const totalScoreQuery = "SELECT id, total_score_std, total_score_taiko, total_score_ctb, total_score_mania FROM users_stats"
+			rows, err := db.Query(totalScoreQuery)
+			if err != nil {
+				queryError(err, totalScoreQuery)
+				return
+			}
+			count = 0
+			for rows.Next() {
+				if count%100 == 0 {
+					verboseln("> CacheLevel:", count)
+				}
+				var (
+					id    int
+					std   int64
+					taiko int64
+					ctb   int64
+					mania int64
+				)
+				err := rows.Scan(&id, &std, &taiko, &ctb, &mania)
+				if err != nil {
+					queryError(err, totalScoreQuery)
+					continue
+				}
+				if _, ex := data[id]; !ex {
+					data[id] = &[4]*s{}
+					for i := 0; i < 4; i++ {
+						data[id][i] = &s{}
+					}
+				}
+				data[id][0].level = ocl.GetLevel(std)
+				data[id][1].level = ocl.GetLevel(taiko)
+				data[id][2].level = ocl.GetLevel(ctb)
+				data[id][3].level = ocl.GetLevel(mania)
+				count++
+			}
+			rows.Close()
 		}
-		for modeInt, modeData := range v {
-			if modeData == nil {
+		for k, v := range data {
+			if v == nil {
 				continue
 			}
-			var setQ string
-			var params []interface{}
-			if c.CacheRankedScore {
-				setQ += "ranked_score_" + modeToString(modeInt) + " = ?"
-				params = append(params, (*modeData).rankedScore)
-			}
-			if c.CacheTotalHits {
-				if setQ != "" {
-					setQ += ", "
+			for modeInt, modeData := range v {
+				if modeData == nil {
+					continue
 				}
-				setQ += "total_hits_" + modeToString(modeInt) + " = ?"
-				params = append(params, (*modeData).totalHits)
-			}
-			if c.CacheLevel {
-				if setQ != "" {
-					setQ += ", "
+				var setQ string
+				var params []interface{}
+				if c.CacheRankedScore {
+					setQ += "ranked_score_" + modeToString(modeInt) + " = ?"
+					params = append(params, (*modeData).rankedScore)
 				}
-				setQ += "level_" + modeToString(modeInt) + " = ?"
-				params = append(params, (*modeData).level)
-			}
-			if setQ != "" {
-				params = append(params, k)
-				op("UPDATE users_stats SET "+setQ+" WHERE id = ?", params...)
+				if c.CacheTotalHits {
+					if setQ != "" {
+						setQ += ", "
+					}
+					setQ += "total_hits_" + modeToString(modeInt) + " = ?"
+					params = append(params, (*modeData).totalHits)
+				}
+				if c.CacheLevel {
+					if setQ != "" {
+						setQ += ", "
+					}
+					setQ += "level_" + modeToString(modeInt) + " = ?"
+					params = append(params, (*modeData).level)
+				}
+				if setQ != "" {
+					params = append(params, k)
+					op("UPDATE users_stats SET "+setQ+" WHERE id = ?", params...)
+				}
 			}
 		}
 	}

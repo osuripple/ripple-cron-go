@@ -8,44 +8,56 @@ import (
 
 func opCalculateAccuracy() {
 	defer wg.Done()
-	const initQuery = "SELECT id, 300_count, 100_count, 50_count, gekis_count, katus_count, misses_count, play_mode, accuracy FROM scores"
-	rows, err := db.Query(initQuery)
-	if err != nil {
-		queryError(err, initQuery)
-	}
+	const initQuery = "SELECT id, 300_count, 100_count, 50_count, gekis_count, katus_count, misses_count, play_mode, accuracy FROM scores WHERE id > ? LIMIT 1000"
+	maxid := 0
 	count := 0
-	for rows.Next() {
-		if count%1000 == 0 {
-			verboseln("> CalculateAccuracy:", count)
-		}
-		var (
-			id        int
-			count300  int
-			count100  int
-			count50   int
-			countgeki int
-			countkatu int
-			countmiss int
-			playMode  int
-			accuracy  *float64
-		)
-		err := rows.Scan(&id, &count300, &count100, &count50, &countgeki, &countkatu, &countmiss, &playMode, &accuracy)
+	for {
+		maxidBefore := maxid
+		rows, err := db.Query(initQuery, maxid)
 		if err != nil {
-			queryError(err, initQuery)
-			continue
+			queryError(err, initQuery, maxid)
+			break
 		}
-		if accuracy == nil {
-			var a float64
-			accuracy = &a
+		for rows.Next() {
+			if count%1000 == 0 {
+				verboseln("> CalculateAccuracy:", count)
+			}
+			var (
+				id        int
+				count300  int
+				count100  int
+				count50   int
+				countgeki int
+				countkatu int
+				countmiss int
+				playMode  int
+				accuracy  *float64
+			)
+			err := rows.Scan(&id, &count300, &count100, &count50, &countgeki, &countkatu, &countmiss, &playMode, &accuracy)
+			if err != nil {
+				queryError(err, initQuery)
+				continue
+			}
+			if id > maxid {
+				maxid = id
+			}
+			if accuracy == nil {
+				var a float64
+				accuracy = &a
+			}
+			newAcc := calculateAccuracy(count300, count100, count50, countgeki, countkatu, countmiss, playMode)
+			// if accuracies are not accurate to the .001
+			if !math.IsNaN(newAcc) && math.Floor(newAcc*1000) != math.Floor((*accuracy)*1000) {
+				op("UPDATE scores SET accuracy = ? WHERE id = ?", newAcc, id)
+			}
+			count++
 		}
-		newAcc := calculateAccuracy(count300, count100, count50, countgeki, countkatu, countmiss, playMode)
-		// if accuracies are not accurate to the .001
-		if !math.IsNaN(newAcc) && math.Floor(newAcc*1000) != math.Floor((*accuracy)*1000) {
-			op("UPDATE scores SET accuracy = ? WHERE id = ?", newAcc, id)
+		rows.Close()
+		if maxidBefore == maxid {
+			// no change in maxid: time to break
+			break
 		}
-		count++
 	}
-	rows.Close()
 	color.Green("> CalculateAccuracy: done!")
 }
 
