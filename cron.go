@@ -204,7 +204,7 @@ func opSync(query string, params ...interface{}) {
 }
 
 // Operations that can be executed with a simple db.Exec, distributed across 8 workers.
-var execOperations = make(chan operation, 1000)
+var execOperations = make(chan operation, 100000)
 
 // Operations that must be executed in order and synchronously.
 var syncOperations = make(chan operation, 20)
