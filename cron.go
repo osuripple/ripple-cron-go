@@ -138,7 +138,7 @@ func main() {
 		INNER JOIN users_stats
 		WHERE users.id = users_stats.id AND users.latest_activity = 0
 		AND users.privileges = 1048576 AND users.register_datetime < ?`,
-			time.Now().Add(-time.Hour*24*c.PrunePendingVerificationAfter))
+			time.Now().Add(-time.Hour*24*time.Duration(c.PrunePendingVerificationAfter)))
 	}
 	if c.RemoveDonorOnExpired {
 		verboseln("Removing donor privileges on users where donor expired")
