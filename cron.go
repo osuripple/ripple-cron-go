@@ -39,6 +39,7 @@ type config struct {
 	ClearExpiredProfileBackgrounds bool
 	DeleteOldPrivateTokens         bool `description:"Whether to delete old private (private = 1) API tokens (older than a month)"`
 	SetOnlineUsers                 bool
+	PrunePendingVerificationAfter  int `description:"Number of days after which a user will be removed if they are still pending verification."`
 
 	Workers int `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
@@ -130,6 +131,14 @@ func main() {
 		go opSync(`DELETE scores.* FROM scores
 		LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5
 		WHERE beatmaps.beatmap_md5 IS NULL`)
+	}
+	if c.PrunePendingVerificationAfter > 0 {
+		verboseln("Pruning users pending verification...")
+		go opSync(`DELETE users, users_stats FROM users
+		INNER JOIN users_stats
+		WHERE users.id = users_stats.id AND users.latest_activity = 0
+		AND users.privileges = 1048576 AND users.register_datetime < ?`,
+			time.Now().Add(-time.Hour*24*c.PrunePendingVerificationAfter))
 	}
 	if c.RemoveDonorOnExpired {
 		verboseln("Removing donor privileges on users where donor expired")
