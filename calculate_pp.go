@@ -14,7 +14,7 @@ type ppUserMode struct {
 func opCalculatePP() {
 	defer wg.Done()
 
-	const ppQuery = "SELECT scores.userid, pp, scores.play_mode FROM scores INNER JOIN users ON users.id=scores.userid WHERE completed = '3' ORDER BY pp DESC"
+	const ppQuery = "SELECT scores.userid, pp, scores.play_mode FROM scores INNER JOIN users ON users.id=scores.userid JOIN beatmaps USING(beatmap_md5) WHERE completed = 3 AND ranked >= 2 AND disable_pp = 0 AND pp IS NOT NULL ORDER BY pp DESC"
 	rows, err := db.Query(ppQuery)
 	if err != nil {
 		queryError(err, ppQuery)
@@ -61,7 +61,7 @@ func opCalculatePP() {
 
 	for userid, pps := range users {
 		for mode, ppUM := range *pps {
-			op("UPDATE users_stats SET pp_"+modeToString(mode)+" = ? WHERE id = ?", ppUM.ppTotal, userid)
+			op("UPDATE users_stats SET pp_"+modeToString(mode)+" = ? WHERE id = ? LIMIT 1", ppUM.ppTotal, userid)
 		}
 	}
 
