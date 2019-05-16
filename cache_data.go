@@ -143,6 +143,19 @@ func opCacheData() {
 				setQ += "level_" + modeToString(modeInt) + " = ?"
 				params = append(params, (*modeData).level)
 			}
+			if c.CachePlayTime {
+				if setQ != "" {
+					setQ += ", "
+				}
+				setQ += "playtime_" + modeToString(modeInt) + " = (" +
+					"SELECT SUM(IF(scores.mods & 64 > 0, FLOOR(beatmaps.hit_length / 1.5), " +
+					"IF(scores.mods & 256 > 0, FLOOR(beatmaps.hit_length / 0.75), " +
+					"beatmaps.hit_length))) AS x " +
+					"FROM scores JOIN beatmaps " +
+					"USING(beatmap_md5) " +
+					"WHERE scores.userid = ? AND scores.play_mode = ? LIMIT 1)"
+				params = append(params, k, modeInt)
+			}
 			if setQ != "" {
 				params = append(params, k)
 				op("UPDATE users_stats SET "+setQ+" WHERE id = ?", params...)
