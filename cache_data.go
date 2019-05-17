@@ -11,6 +11,7 @@ type s struct {
 	rankedScore int64
 	totalHits   int64
 	level       int
+	playTime    int64
 }
 
 func opCacheData() {
@@ -20,8 +21,8 @@ func opCacheData() {
 	SELECT
 		users.id as user_id, users.username, scores.play_mode,
 		scores.score, scores.completed, scores.300_count,
-		scores.100_count, scores.50_count
-	FROM scores
+		scores.100_count, scores.50_count, scores.mods, beatmaps.hit_length 
+	FROM scores JOIN beatmaps USING(beatmap_md5) 
 	INNER JOIN users ON users.id=scores.userid`
 	rows, err := db.Query(fetchQuery)
 	if err != nil {
@@ -48,8 +49,12 @@ func opCacheData() {
 			count300  int
 			count100  int
 			count50   int
+			mods      int
+			hitLength int
 		)
-		err := rows.Scan(&uid, &username, &playMode, &score, &completed, &count300, &count100, &count50)
+		err := rows.Scan(
+			&uid, &username, &playMode, &score, &completed, &count300, &count100, &count50, &mods, &hitLength,
+		)
 		if err != nil {
 			queryError(err, fetchQuery)
 			continue
@@ -72,6 +77,16 @@ func opCacheData() {
 		// add to the number of totalhits count of {300,100,50} hits
 		if c.CacheTotalHits {
 			data[uid][playMode].totalHits += int64(count300) + int64(count100) + int64(count50)
+		}
+		// play time
+		if c.CachePlayTime {
+			// adjust hit length based on currently active mods
+			if (mods & 64) > 0 {
+				hitLength = int(float64(hitLength) / 1.5)
+			} else if (mods & 256) > 0 {
+				hitLength = int(float64(hitLength) / 0.75)
+			}
+			data[uid][playMode].playTime += int64(hitLength)
 		}
 		count++
 	}
@@ -147,14 +162,8 @@ func opCacheData() {
 				if setQ != "" {
 					setQ += ", "
 				}
-				setQ += "playtime_" + modeToString(modeInt) + " = (" +
-					"SELECT IFNULL(SUM(IF(scores.mods & 64 > 0, FLOOR(beatmaps.hit_length / 1.5), " +
-					"IF(scores.mods & 256 > 0, FLOOR(beatmaps.hit_length / 0.75), " +
-					"beatmaps.hit_length))), 0) AS x " +
-					"FROM scores JOIN beatmaps " +
-					"USING(beatmap_md5) " +
-					"WHERE scores.userid = ? AND scores.play_mode = ? LIMIT 1)"
-				params = append(params, k, modeInt)
+				setQ += "playtime_" + modeToString(modeInt) + " = ?"
+				params = append(params, (*modeData).playTime)
 			}
 			if setQ != "" {
 				params = append(params, k)
