@@ -21,9 +21,8 @@ func opCacheData() {
 	SELECT
 		users.id as user_id, users.username, scores.play_mode,
 		scores.score, scores.completed, scores.300_count,
-		scores.100_count, scores.50_count, scores.mods, beatmaps.hit_length 
-	FROM scores JOIN beatmaps USING(beatmap_md5) 
-	INNER JOIN users ON users.id=scores.userid`
+		scores.100_count, scores.50_count, scores.playtime 
+	FROM scores INNER JOIN users ON users.id=scores.userid`
 	rows, err := db.Query(fetchQuery)
 	if err != nil {
 		queryError(err, fetchQuery)
@@ -49,11 +48,10 @@ func opCacheData() {
 			count300  int
 			count100  int
 			count50   int
-			mods      int
-			hitLength int
+			playTime  int
 		)
 		err := rows.Scan(
-			&uid, &username, &playMode, &score, &completed, &count300, &count100, &count50, &mods, &hitLength,
+			&uid, &username, &playMode, &score, &completed, &count300, &count100, &count50, &playTime,
 		)
 		if err != nil {
 			queryError(err, fetchQuery)
@@ -80,13 +78,7 @@ func opCacheData() {
 		}
 		// play time
 		if c.CachePlayTime {
-			// adjust hit length based on currently active mods
-			if (mods & 64) > 0 {
-				hitLength = int(float64(hitLength) / 1.5)
-			} else if (mods & 256) > 0 {
-				hitLength = int(float64(hitLength) / 0.75)
-			}
-			data[uid][playMode].playTime += int64(hitLength)
+			data[uid][playMode].playTime += int64(playTime)
 		}
 		count++
 	}
