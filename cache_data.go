@@ -14,6 +14,12 @@ type s struct {
 	playTime    int64
 }
 
+type mostRecentK struct {
+	userID    int
+	playMode  int
+	beatmapID int
+}
+
 func opCacheData() {
 	defer wg.Done()
 	// get data
@@ -21,8 +27,8 @@ func opCacheData() {
 	SELECT
 		users.id as user_id, users.username, scores.play_mode,
 		scores.score, scores.completed, scores.300_count,
-		scores.100_count, scores.50_count, scores.playtime 
-	FROM scores INNER JOIN users ON users.id=scores.userid`
+		scores.100_count, scores.50_count, scores.playtime, beatmaps.beatmap_id 
+	FROM scores INNER JOIN users ON users.id=scores.userid JOIN beatmaps USING(beatmap_md5)`
 	rows, err := db.Query(fetchQuery)
 	if err != nil {
 		queryError(err, fetchQuery)
@@ -31,6 +37,10 @@ func opCacheData() {
 
 	// set up end map where all the data is
 	data := make(map[int]*[4]*s)
+	var mostRecentData map[mostRecentK]int
+	if c.CacheMostRecentBeatmaps {
+		mostRecentData = make(map[mostRecentK]int)
+	}
 
 	count := 0
 
@@ -49,9 +59,10 @@ func opCacheData() {
 			count100  int
 			count50   int
 			playTime  int
+			beatmapID int
 		)
 		err := rows.Scan(
-			&uid, &username, &playMode, &score, &completed, &count300, &count100, &count50, &playTime,
+			&uid, &username, &playMode, &score, &completed, &count300, &count100, &count50, &playTime, &beatmapID,
 		)
 		if err != nil {
 			queryError(err, fetchQuery)
@@ -79,6 +90,10 @@ func opCacheData() {
 		// play time
 		if c.CachePlayTime {
 			data[uid][playMode].playTime += int64(playTime)
+		}
+		// most recent beatmaps
+		if c.CacheMostRecentBeatmaps {
+			mostRecentData[mostRecentK{uid, playMode, beatmapID}]++
 		}
 		count++
 	}
@@ -121,6 +136,12 @@ func opCacheData() {
 			count++
 		}
 		rows.Close()
+	}
+	if c.CacheMostRecentBeatmaps {
+		for k, v := range mostRecentData {
+			op("INSERT INTO users_beatmap_playcount (user_id, beatmap_id, game_mode, playcount)"+
+				"VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE playcount = ?", k.userID, k.beatmapID, k.playMode, v, v)
+		}
 	}
 	for k, v := range data {
 		if v == nil {

@@ -21,11 +21,12 @@ type config struct {
 	RedisAddr     string
 	RedisPassword string
 
-	CalculateAccuracy bool
-	CacheRankedScore  bool
-	CacheTotalHits    bool
-	CacheLevel        bool
-	CachePlayTime     bool
+	CalculateAccuracy       bool
+	CacheRankedScore        bool
+	CacheTotalHits          bool
+	CacheLevel              bool
+	CachePlayTime           bool
+	CacheMostRecentBeatmaps bool
 
 	DeleteOldPasswordResets        bool
 	CleanReplays                   bool
@@ -150,7 +151,7 @@ func main() {
 			}
 		}()
 	}
-	if c.CacheLevel || c.CacheTotalHits || c.CacheRankedScore || c.CachePlayTime {
+	if c.CacheLevel || c.CacheTotalHits || c.CacheRankedScore || c.CachePlayTime || c.CacheMostRecentBeatmaps {
 		verboseln("Starting caching of various user stats")
 		wg.Add(1)
 		go opCacheData()
