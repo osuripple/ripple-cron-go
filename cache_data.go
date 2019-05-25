@@ -14,7 +14,7 @@ type s struct {
 	playTime    int64
 }
 
-type mostRecentK struct {
+type mostPlayedK struct {
 	userID    int
 	playMode  int
 	beatmapID int
@@ -37,9 +37,9 @@ func opCacheData() {
 
 	// set up end map where all the data is
 	data := make(map[int]*[4]*s)
-	var mostRecentData map[mostRecentK]int
-	if c.CacheMostRecentBeatmaps {
-		mostRecentData = make(map[mostRecentK]int)
+	var mostPlayedData map[mostPlayedK]int
+	if c.CacheMostPlayedBeatmaps {
+		mostPlayedData = make(map[mostPlayedK]int)
 	}
 
 	count := 0
@@ -92,8 +92,8 @@ func opCacheData() {
 			data[uid][playMode].playTime += int64(playTime)
 		}
 		// most recent beatmaps
-		if c.CacheMostRecentBeatmaps {
-			mostRecentData[mostRecentK{uid, playMode, beatmapID}]++
+		if c.CacheMostPlayedBeatmaps {
+			mostPlayedData[mostPlayedK{uid, playMode, beatmapID}]++
 		}
 		count++
 	}
@@ -137,8 +137,8 @@ func opCacheData() {
 		}
 		rows.Close()
 	}
-	if c.CacheMostRecentBeatmaps {
-		for k, v := range mostRecentData {
+	if c.CacheMostPlayedBeatmaps {
+		for k, v := range mostPlayedData {
 			op("INSERT INTO users_beatmap_playcount (user_id, beatmap_id, game_mode, playcount)"+
 				"VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE playcount = ?", k.userID, k.beatmapID, k.playMode, v, v)
 		}

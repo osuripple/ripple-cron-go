@@ -26,7 +26,7 @@ type config struct {
 	CacheTotalHits          bool
 	CacheLevel              bool
 	CachePlayTime           bool
-	CacheMostRecentBeatmaps bool
+	CacheMostPlayedBeatmaps bool
 
 	DeleteOldPasswordResets        bool
 	CleanReplays                   bool
@@ -151,7 +151,7 @@ func main() {
 			}
 		}()
 	}
-	if c.CacheLevel || c.CacheTotalHits || c.CacheRankedScore || c.CachePlayTime || c.CacheMostRecentBeatmaps {
+	if c.CacheLevel || c.CacheTotalHits || c.CacheRankedScore || c.CachePlayTime || c.CacheMostPlayedBeatmaps {
 		verboseln("Starting caching of various user stats")
 		wg.Add(1)
 		go opCacheData()
