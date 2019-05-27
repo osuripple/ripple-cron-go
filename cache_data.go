@@ -138,9 +138,28 @@ func opCacheData() {
 		rows.Close()
 	}
 	if c.CacheMostPlayedBeatmaps {
+		// Blocks until the table has been truncated
+		verboseln("> MostPlayedBeatmaps: Truncating table")
+		runOperation(operation{"TRUNCATE TABLE users_beatmap_playcount", nil})
+		verboseln("> MostPlayedBeatmaps: Table truncated")
+
+		// Start populating the table once it's been truncated
+		done, ignored := 0, 0
 		for k, v := range mostPlayedData {
-			op("INSERT INTO users_beatmap_playcount (user_id, beatmap_id, game_mode, playcount)"+
-				"VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE playcount = ?", k.userID, k.beatmapID, k.playMode, v, v)
+			if v < 30 {
+				ignored++
+				if ignored%1000 == 0 {
+					verboseln("> MostPlayedBeatmaps: Ignored", ignored)
+				}
+			} else {
+				op("INSERT INTO users_beatmap_playcount (user_id, beatmap_id, game_mode, playcount)"+
+					"VALUES (?, ?, ?, ?)", k.userID, k.beatmapID, k.playMode, v)
+				done++
+				if done%1000 == 0 {
+					verboseln("> MostPlayedBeatmaps: Done", done)
+				}
+			}
+			delete(mostPlayedData, k)
 		}
 	}
 	for k, v := range data {
