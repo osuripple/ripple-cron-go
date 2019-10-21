@@ -42,7 +42,8 @@ type config struct {
 	ClearExpiredProfileBackgrounds bool
 	DeleteOldPrivateTokens         bool `description:"Whether to delete old private (private = 1) API tokens (older than a month)"`
 	SetOnlineUsers                 bool
-	PrunePendingVerificationAfter  int `description:"Number of days after which a user will be removed if they are still pending verification."`
+	PrunePendingVerificationAfter  int  `description:"Number of days after which a user will be removed if they are still pending verification."`
+	CalculateServerWiseStats       bool `description:"Re-calculates some server-wise cached stats (mostly displayed in RAP)"`
 
 	Workers int `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
@@ -190,6 +191,11 @@ func main() {
 	if c.SetOnlineUsers {
 		wg.Add(1)
 		go opSetOnlineUsers()
+	}
+	if c.CalculateServerWiseStats {
+		verboseln("Starting calculating server-wise stats")
+		wg.Add(1)
+		go opServerwiseStats()
 	}
 
 	wg.Wait()
