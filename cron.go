@@ -161,8 +161,8 @@ func main() {
 		go opCacheData()
 	}
 	if cacheData && c.FixStatsOverflow {
-		color.Yellow("Ignoring FixStatsOverflow because CacheData is already enabled")
-	} else {
+		color.Yellow("> Ignoring FixStatsOverflow because CacheData is already enabled")
+	} else if c.FixStatsOverflow {
 		verboseln("Starting fixing total scores and ranked scores overflow")
 		wg.Add(1)
 		go opFixStatsOverflow()
