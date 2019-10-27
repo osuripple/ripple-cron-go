@@ -57,6 +57,32 @@ Then you would add a bool in the `config` struct to enable/disable the task, the
 	}
 ```
 
+## CLI Arguments
+
+```
+root@c021393c3a8a:/go/src/zxq.co/ripple/ripple-cron-go# ./ripple-cron-go -h                 
+Usage of ./ripple-cron-go:
+  -config string
+    	Configuration file (default "cron.conf")
+  -v	verbose
+  -vv
+    	very verbose (LogQueries)
+```
+
+### Logging
+By default, ripple-cron-go outputs very little information to stdout. You can increase the amount of logged information with the `-v` flag. This will show the progress of each job.  
+The `-vv` flag will log queries as well and it should be used only for debugging purposes.
+
+### Multiple configs
+You can also specify multiple `.conf` files (es: `hourly.conf` and `daily.conf`) and then run ripple-cron-go with a specific config file with:
+```sh
+$ ./ripple-cron-co -config=hourly.conf
+$ ./ripple-cron-co -config=daily.conf
+```
+
+If the specified `.conf` file does not exist, ripple-cron-go will create it and populate it with default settings.  
+If no `-config` flag is provided, `cron.conf` will be used as configuration file.
+
 ## License
 All code in this repository is licensed under the GNU AGPL 3 License.  
 See the "LICENSE" file for more information.

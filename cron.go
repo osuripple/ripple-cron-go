@@ -59,30 +59,35 @@ var wg sync.WaitGroup
 var chanWg sync.WaitGroup
 var v bool
 var vv bool
+var configFile string
 
 func init() {
 	flag.BoolVar(&v, "v", false, "verbose")
 	flag.BoolVar(&vv, "vv", false, "very verbose (LogQueries)")
+	configFlag := flag.String("config", "cron.conf", "Configuration file")
 	flag.Parse()
+	configFile = string(*configFlag)
 
 	v = vv || v
 }
 
 func main() {
 	// Set up the configuration.
-	err := conf.Load(&c, "cron.conf")
+	flag.Parse()
+
+	err := conf.Load(&c, configFile)
 	switch {
 	case err == conf.ErrNoFile:
-		color.Yellow("No cron.conf was found. Creating it")
-		err := conf.Export(&c, "cron.conf")
+		color.Yellow("No %s was found. Creating it", configFile)
+		err := conf.Export(&c, configFile)
 		if err != nil {
-			color.Red("Couldn't create cron.conf: %v.", err)
+			color.Red("Couldn't create %s: %v.", configFile, err)
 		} else {
-			color.Green("cron.conf has been created!")
+			color.Green("%s has been created!", configFile)
 		}
 		return
 	case err != nil:
-		color.Red("cron.conf couldn't be loaded: %v.", err)
+		color.Red("%s couldn't be loaded: %v.", configFile, err)
 		return
 	}
 
@@ -214,7 +219,7 @@ func main() {
 	close(execOperations)
 	close(syncOperations)
 	chanWg.Wait()
-	conf.Export(c, "cron.conf")
+	conf.Export(c, configFile)
 }
 
 // db operation to be made, generally used for execOperations
