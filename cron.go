@@ -44,6 +44,7 @@ type config struct {
 	SetOnlineUsers                 bool
 	PrunePendingVerificationAfter  int  `description:"Number of days after which a user will be removed if they are still pending verification."`
 	CalculateServerWiseStats       bool `description:"Re-calculates some server-wise cached stats (mostly displayed in RAP)"`
+	FixStatsOverflow               bool `description:"Re-calculates ranked & total score for users whose values have overflowed. Faster than CacheData if there's an overflow issue. This will be ignored if CacheData=true."`
 
 	Workers int `description:"The number of goroutines which should execute queries. Increasing it may make cron faster, depending on your system."`
 }
@@ -147,16 +148,24 @@ func main() {
 	if c.RemoveDonorOnExpired {
 		verboseln("Removing donor privileges on users where donor expired")
 		go func() {
-			_, err := http.Post(c.DonorbotBaseApiUrl + "/api/v1/clear_donor", "", nil)
+			_, err := http.Post(c.DonorbotBaseApiUrl+"/api/v1/clear_donor", "", nil)
 			if err != nil {
 				color.Red("%v", err)
 			}
 		}()
 	}
-	if c.CacheLevel || c.CacheTotalHits || c.CacheRankedScore || c.CachePlayTime || c.CacheMostPlayedBeatmaps {
+	cacheData := c.CacheLevel || c.CacheTotalHits || c.CacheRankedScore || c.CachePlayTime || c.CacheMostPlayedBeatmaps
+	if cacheData {
 		verboseln("Starting caching of various user stats")
 		wg.Add(1)
 		go opCacheData()
+	}
+	if cacheData && c.FixStatsOverflow {
+		color.Yellow("Ignoring FixStatsOverflow because CacheData is already enabled")
+	} else {
+		verboseln("Starting fixing total scores and ranked scores overflow")
+		wg.Add(1)
+		go opFixStatsOverflow()
 	}
 	if c.CleanReplays {
 		verboseln("Starting cleaning useless replays")
