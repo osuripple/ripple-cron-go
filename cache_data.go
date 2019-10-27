@@ -25,10 +25,10 @@ func opCacheData() {
 	// get data
 	const fetchQuery = `
 	SELECT
-		users.id as user_id, users.username, scores.play_mode,
+		scores.userid, scores.play_mode,
 		scores.score, scores.completed, scores.300_count,
 		scores.100_count, scores.50_count, scores.playtime, beatmaps.beatmap_id 
-	FROM scores INNER JOIN users ON users.id=scores.userid JOIN beatmaps USING(beatmap_md5)`
+	FROM scores JOIN beatmaps USING(beatmap_md5)`
 	rows, err := db.Query(fetchQuery)
 	if err != nil {
 		queryError(err, fetchQuery)
@@ -51,7 +51,6 @@ func opCacheData() {
 		}
 		var (
 			uid       int
-			username  string
 			playMode  int
 			score     int64
 			completed int
@@ -62,7 +61,7 @@ func opCacheData() {
 			beatmapID int
 		)
 		err := rows.Scan(
-			&uid, &username, &playMode, &score, &completed, &count300, &count100, &count50, &playTime, &beatmapID,
+			&uid, &playMode, &score, &completed, &count300, &count100, &count50, &playTime, &beatmapID,
 		)
 		if err != nil {
 			queryError(err, fetchQuery)
