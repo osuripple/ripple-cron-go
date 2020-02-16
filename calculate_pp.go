@@ -14,14 +14,14 @@ type ppUserMode struct {
 func opCalculatePP() {
 	defer wg.Done()
 
-	const ppQuery = "SELECT scores.userid, pp, scores.play_mode FROM scores INNER JOIN users ON users.id=scores.userid JOIN beatmaps USING(beatmap_md5) WHERE completed = 3 AND ranked >= 2 AND disable_pp = 0 AND pp IS NOT NULL ORDER BY pp DESC"
+	const ppQuery = "SELECT scores.userid, pp, scores.play_mode, scores.is_relax FROM scores INNER JOIN users ON users.id=scores.userid JOIN beatmaps USING(beatmap_md5) WHERE completed = 3 AND ranked >= 2 AND disable_pp = 0 AND pp IS NOT NULL ORDER BY pp DESC LIMIT 10000"
 	rows, err := db.Query(ppQuery)
 	if err != nil {
 		queryError(err, ppQuery)
 		return
 	}
 
-	users := make(map[int]*[4]*ppUserMode)
+	users := make(map[int]*[2]*[4]*ppUserMode)
 	var count int
 
 	for rows.Next() {
@@ -32,8 +32,9 @@ func opCalculatePP() {
 			userid   int
 			ppAmt    *float64
 			playMode int
+			isRelax  int8
 		)
-		err := rows.Scan(&userid, &ppAmt, &playMode)
+		err := rows.Scan(&userid, &ppAmt, &playMode, &isRelax)
 		if err != nil {
 			queryError(err, ppQuery)
 			continue
@@ -42,26 +43,41 @@ func opCalculatePP() {
 			continue
 		}
 		if users[userid] == nil {
-			users[userid] = &[4]*ppUserMode{
-				new(ppUserMode),
-				new(ppUserMode),
-				new(ppUserMode),
-				new(ppUserMode),
+			var arr [2]*[4]*ppUserMode
+			for relax := 0; relax < 1; relax++ {
+				arr[relax] = &[4]*ppUserMode{
+					new(ppUserMode),
+					new(ppUserMode),
+					new(ppUserMode),
+					new(ppUserMode),
+				}
 			}
+			users[userid] = &arr
 		}
-		if users[userid][playMode].countScores > 500 {
+		if users[userid][isRelax][playMode].countScores > 500 {
 			continue
 		}
-		currentScorePP := round(round(*ppAmt) * math.Pow(0.95, float64(users[userid][playMode].countScores)))
-		users[userid][playMode].countScores++
-		users[userid][playMode].ppTotal += int(currentScorePP)
+		currentScorePP := round(round(*ppAmt) * math.Pow(0.95, float64(users[userid][isRelax][playMode].countScores)))
+		users[userid][isRelax][playMode].countScores++
+		users[userid][isRelax][playMode].ppTotal += int(currentScorePP)
 		count++
 	}
 	rows.Close()
 
-	for userid, pps := range users {
-		for mode, ppUM := range *pps {
-			op("UPDATE users_stats SET pp_"+modeToString(mode)+" = ? WHERE id = ? LIMIT 1", ppUM.ppTotal, userid)
+	var table string
+	for userid, ppr := range users {
+		for relax, pps := range *ppr {
+			if pps == nil {
+				continue
+			}
+			if relax == 0 {
+				table = "users_stats"
+			} else {
+				table = "users_stats_relax"
+			}
+			for mode, ppUM := range *pps {
+				op("UPDATE "+table+" SET pp_"+modeToString(mode)+" = ? WHERE id = ? LIMIT 1", ppUM.ppTotal, userid)
+			}
 		}
 	}
 
