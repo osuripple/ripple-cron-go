@@ -28,13 +28,29 @@ func opPopulateRedis() {
 
 	r.Del("hanayo:country_list")
 
-	const initQuery = `
+	populateLeaderboard(false)
+	populateLeaderboard(true)
+
+	color.Green("> PopulateRedis: done!")
+}
+
+func populateLeaderboard(relax bool) {
+	var table string
+	var suffix string
+	if relax {
+		table = "users_stats_relax"
+		suffix = ":relax"
+	} else {
+		table = "users_stats"
+		suffix = ""
+	}
+	initQuery := `
 SELECT
-	users_stats.id, users_stats.country, pp_std,
-	pp_taiko, pp_ctb, pp_mania,
-	playcount_std, playcount_taiko, playcount_ctb, playcount_mania,
+	users_stats.id, full_stats.country, users_stats.pp_std,
+	users_stats.pp_taiko, users_stats.pp_ctb, users_stats.pp_mania,
+	users_stats.playcount_std, users_stats.playcount_taiko, users_stats.playcount_ctb, users_stats.playcount_mania,
 	users.latest_activity
-FROM users_stats INNER JOIN users ON users.id = users_stats.id WHERE privileges & 1 > 0`
+FROM ` + table + ` AS users_stats JOIN users_stats AS full_stats USING(id) INNER JOIN users USING(id) WHERE is_public = 1`
 
 	rows, err := db.Query(initQuery)
 	if err != nil {
@@ -73,20 +89,18 @@ FROM users_stats INNER JOIN users ON users.id = users_stats.id WHERE privileges 
 			if isInactive(float64(currentSeconds-latestActivity), playcount[k]) {
 				continue
 			}
-			r.ZAdd("ripple:leaderboard:"+modes[k], redis.Z{
+			r.ZAdd("ripple:leaderboard:"+modes[k]+suffix, redis.Z{
 				Member: uid,
 				Score:  float64(v),
 			})
 			if country != "xx" && country != "" {
-				r.ZAdd("ripple:leaderboard:"+modes[k]+":"+country, redis.Z{
+				r.ZAdd("ripple:leaderboard:"+modes[k]+":"+country+suffix, redis.Z{
 					Member: uid,
 					Score:  float64(v),
 				})
 			}
 		}
 	}
-
-	color.Green("> PopulateRedis: done!")
 }
 
 func isInactive(secondsInactive float64, playcount int) bool {
