@@ -14,7 +14,7 @@ type ppUserMode struct {
 func opCalculatePP() {
 	defer wg.Done()
 
-	const ppQuery = "SELECT scores.userid, pp, scores.play_mode, scores.is_relax FROM scores INNER JOIN users ON users.id=scores.userid JOIN beatmaps USING(beatmap_md5) WHERE completed = 3 AND ranked >= 2 AND disable_pp = 0 AND pp IS NOT NULL ORDER BY pp DESC LIMIT 10000"
+	const ppQuery = "SELECT scores.userid, pp, scores.play_mode, scores.is_relax FROM scores INNER JOIN users ON users.id=scores.userid JOIN beatmaps USING(beatmap_md5) WHERE completed = 3 AND ranked >= 2 AND disable_pp = 0 AND pp IS NOT NULL ORDER BY pp DESC"
 	rows, err := db.Query(ppQuery)
 	if err != nil {
 		queryError(err, ppQuery)
@@ -44,7 +44,7 @@ func opCalculatePP() {
 		}
 		if users[userid] == nil {
 			var arr [2]*[4]*ppUserMode
-			for relax := 0; relax < 1; relax++ {
+			for relax := 0; relax <= 1; relax++ {
 				arr[relax] = &[4]*ppUserMode{
 					new(ppUserMode),
 					new(ppUserMode),
@@ -54,6 +54,7 @@ func opCalculatePP() {
 			}
 			users[userid] = &arr
 		}
+		// verboseln(userid, isRelax, users[userid][isRelax])
 		if users[userid][isRelax][playMode].countScores > 500 {
 			continue
 		}
