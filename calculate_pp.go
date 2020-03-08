@@ -37,7 +37,7 @@ func opCalculatePP() {
 	// the scores table will be locked for a (very) long time,
 	// so we fetch the scores in an arbitrary order and we
 	// let the cron sort them by pp (in this case, we use a max-heap).
-	const ppQuery = "SELECT scores.userid, pp, scores.play_mode, scores.is_relax FROM scores JOIN users ON users.id=scores.userid JOIN beatmaps USING(beatmap_md5) WHERE completed = 3 AND ranked >= 2 AND disable_pp = 0"
+	const ppQuery = "SELECT scores.userid, pp, scores.play_mode, scores.is_relax FROM scores JOIN beatmaps USING(beatmap_md5) WHERE completed = 3 AND ranked >= 2 AND disable_pp = 0"
 	rows, err := db.Query(ppQuery)
 	if err != nil {
 		queryError(err, ppQuery)
