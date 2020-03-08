@@ -36,7 +36,7 @@ func opCalculatePP() {
 	// We do not rely on MySQL to sort the scores by pp or
 	// the scores table will be locked for a (very) long time,
 	// so we fetch the scores in an arbitrary order and we
-	// let the cron sort them by pp.
+	// let the cron sort them by pp (in this case, we use a max-heap).
 	const ppQuery = "SELECT scores.userid, pp, scores.play_mode, scores.is_relax FROM scores JOIN users ON users.id=scores.userid JOIN beatmaps USING(beatmap_md5) WHERE completed = 3 AND ranked >= 2 AND disable_pp = 0"
 	rows, err := db.Query(ppQuery)
 	if err != nil {
@@ -50,6 +50,7 @@ func opCalculatePP() {
 		if count%100000 == 0 {
 			verboseln("> CalculatePP: fetched", count)
 		}
+		count++
 		var (
 			userid   int
 			ppAmt    *float64
@@ -61,7 +62,7 @@ func opCalculatePP() {
 			queryError(err, ppQuery)
 			continue
 		}
-		if ppAmt == nil {
+		if ppAmt == nil || almostEqual(*ppAmt, 0) {
 			continue
 		}
 		if users[userid] == nil {
@@ -77,10 +78,8 @@ func opCalculatePP() {
 			users[userid] = &arr
 		}
 		heap.Push(users[userid][isRelax][playMode], *ppAmt)
-		count++
 	}
 	rows.Close()
-	verboseln("> CalculatePP: everything fetched and sorted. Now calculating sum of weighted pp.")
 	count = 0
 	for userID, relaxData := range users {
 		for isRelax, gameModeData := range relaxData {
@@ -109,7 +108,6 @@ func opCalculatePP() {
 					table = "users_stats_relax"
 				}
 				op("UPDATE "+table+" SET pp_"+modeToString(gameMode)+" = ? WHERE id = ? LIMIT 1", totalPP, userID)
-				// verboseln("> Weighted pp for", userID, isRelax, gameMode, "=", totalPP)
 			}
 		}
 	}
@@ -127,4 +125,10 @@ func round(a float64) float64 {
 		return math.Ceil(a - 0.5)
 	}
 	return math.Floor(a + 0.5)
+}
+
+const float64EqualityThreshold = 0.001
+
+func almostEqual(a, b float64) bool {
+	return math.Abs(a-b) <= float64EqualityThreshold
 }
