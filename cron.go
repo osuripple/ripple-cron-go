@@ -38,6 +38,7 @@ type config struct {
 	UnrankScoresOnInvalidBeatmaps  bool `description:"Set to completed = 2 all scores on beatmaps that are not in the database."`
 	RemoveDonorOnExpired           bool
 	DonorbotBaseApiUrl             string
+	DonorbotSecret                 string
 	FixMultipleCompletedScores     bool `description:"Set completed=2 if multiple completed=3 scores for same beatmap and user are present."`
 	ClearExpiredProfileBackgrounds bool
 	DeleteOldPrivateTokens         bool `description:"Whether to delete old private (private = 1) API tokens (older than a month)"`
@@ -153,7 +154,7 @@ func main() {
 	if c.RemoveDonorOnExpired {
 		verboseln("Removing donor privileges on users where donor expired")
 		go func() {
-			_, err := http.Post(c.DonorbotBaseApiUrl+"/api/v1/clear_donor", "", nil)
+			_, err := http.Get(c.DonorbotBaseApiUrl+"/discord/unlink_expired.php?k="+c.DonorbotSecret)
 			if err != nil {
 				color.Red("%v", err)
 			}
