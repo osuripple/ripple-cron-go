@@ -75,7 +75,7 @@ func fixStatsOverflow(relax bool) {
 	}
 	for uid, v := range rankedScores {
 		if v == nil {
-			continue
+			v = make([]int, 4)
 		}
 		op(fmt.Sprintf("UPDATE %s SET ranked_score_std = ?, ranked_score_taiko = ?, ranked_score_ctb = ?, ranked_score_mania = ? WHERE id = ? LIMIT 1", table), v[0], v[1], v[2], v[3], uid)
 	}
