@@ -14,12 +14,19 @@ steps:
     commands:
       - mkdir -p /cache/${DRONE_REPO}/docker
       - git clone https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/dockerfiles /dockerfiles
-      - date +"%Y%m%d.${DRONE_BUILD_NUMBER}" | tr -d '\n' > .tags
       - cp /dockerfiles/dockerfiles/ripple-cron-go.Dockerfile Dockerfile
     volumes:
       - name: cache
         path: /cache
-    secrets: [ git_username, git_password ]
+    secrets: [git_username, git_password]
+    when:
+      event:
+        - push
+
+  - name: create-tags
+    image: busybox
+    commands:
+      - date +"%Y%m%d.${DRONE_BUILD_NUMBER}" | tr -d '\n' > .tags
 
   - name: package-docker
     image: plugins/docker
@@ -32,10 +39,31 @@ steps:
       repo: d.nyodev.xyz/ripple/ripple-cron-go
       use_cache: true
       purge: false
-    secrets: [ docker_username, docker_password ]
+    secrets: [docker_username, docker_password]
     volumes:
       - name: docker
         path: /var/lib/docker
+    when:
+      event:
+        - push
+
+  - name: deploy
+    image: d.nyodev.xyz/ripple-drone/deploy
+    settings:
+      service: cron
+      secret:
+        from_secret: deploy_secret
+      url:
+        from_secret: deploy_url
+    secrets: [deploy_secret, deploy_url]
+    when:
+      event:
+        - promote
+      target:
+        - production
+
+image_pull_secrets:
+  - docker_registry_credentials
 
 volumes:
   - name: cache
@@ -44,4 +72,3 @@ volumes:
   - name: docker
     host:
       path: /var/cache/${DRONE_REPO}/docker
-
