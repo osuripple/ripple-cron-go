@@ -15,6 +15,7 @@ steps:
       - mkdir -p /cache/${DRONE_REPO}/docker
       - git clone https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/dockerfiles /dockerfiles
       - cp /dockerfiles/dockerfiles/ripple-cron-go.Dockerfile Dockerfile
+      - date +"%Y%m%d.${DRONE_BUILD_NUMBER}" | tr -d '\n' > .tags
     volumes:
       - name: cache
         path: /cache
@@ -26,7 +27,12 @@ steps:
   - name: create-tags
     image: busybox
     commands:
-      - date +"%Y%m%d.${DRONE_BUILD_NUMBER}" | tr -d '\n' > .tags
+      - date +"%Y%m%d.${DRONE_BUILD_PARENT}" | tr -d '\n' > .tags
+    when:
+      event:
+        - promote
+      target:
+        - production
 
   - name: package-docker
     image: plugins/docker
